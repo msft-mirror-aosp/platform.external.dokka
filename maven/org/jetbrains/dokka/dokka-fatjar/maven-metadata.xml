@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.jetbrains.dokka</groupId>
+  <artifactId>dokka-fatjar</artifactId>
+  <versioning>
+    <versions>
+      <version>0.9.18-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20180615125642</lastUpdated>
+  </versioning>
+</metadata>
