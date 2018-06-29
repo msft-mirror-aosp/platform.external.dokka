@@ -10,7 +10,7 @@ description:
 third_party {
   url {
     type: GIT
-    value: "github.com/kotlin/dokka"
+    value: "https://github.com/kotlin/dokka.git"
   }
   version: "0.9.18"
   last_upgrade_date { year: 2018 month: 6 day: 18 }
