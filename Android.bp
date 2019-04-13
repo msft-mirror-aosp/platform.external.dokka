@@ -15,6 +15,6 @@
 java_import {
     name: "dokka",
     host_supported: true,
-    jars: ["maven/org/jetbrains/dokka/dokka-fatjar/0.9.17-g20190326/dokka-fatjar-0.9.17-g20190326.jar"],
+    jars: ["maven/org/jetbrains/dokka/dokka-fatjar/0.9.17-g001/dokka-fatjar-0.9.17-g001.jar"],
     installable: true,
 }
