@@ -157,6 +157,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             }
             is ContentSection -> {
             }
+            is ScriptBlock -> script(content.type, content.src) {}
             is ContentBlock -> contentNodesToMarkup(content.children, contextUri)
         }
     }
