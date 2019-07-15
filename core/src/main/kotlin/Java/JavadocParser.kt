@@ -249,6 +249,9 @@ class JavadocParser(
         doc.body().childNodes().forEach {
             convertHtmlNode(it)?.let { append(it) }
         }
+        doc.head().childNodes().forEach {
+            convertHtmlNode(it)?.let { append(it) }
+        }
     }
 
     private fun ContentBlock.convertJavadocElementsToAttrDesc(elements: Iterable<PsiElement>, element: PsiNamedElement) {
@@ -351,6 +354,8 @@ class JavadocParser(
             if (divClass == "special reference" || divClass == "note") ContentSpecialReference()
             else ContentParagraph()
         }
+
+        "script" -> ScriptBlock(element.attr("type"), element.attr("src"))
 
         else -> ContentBlock()
     }
@@ -462,8 +467,11 @@ class JavadocParser(
             }
         }
 
-        // Ignore the @usesMathJax tag
-        "usesMathJax" -> ""
+        // Loads script from CDN, ScriptBlock objects constructs HTML object
+        "usesMathJax" -> {
+            "<script type=\"text/javascript\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/" +
+                    "latest.js?config=TeX-AMS_SVG\"></script>"
+        }
 
         else -> tag.text
     }
