@@ -12,9 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_import {
-    name: "dokka",
-    host_supported: true,
+java_import_host {
+    name: "dokka-jar",
     jars: ["maven/org/jetbrains/dokka/dokka-fatjar/0.9.17-g002/dokka-fatjar-0.9.17-g002.jar"],
-    installable: true,
+}
+
+java_binary_host {
+    name: "dokka",
+    static_libs: ["dokka-jar"],
+    main_class: "org.jetbrains.dokka.MainKt",
 }
