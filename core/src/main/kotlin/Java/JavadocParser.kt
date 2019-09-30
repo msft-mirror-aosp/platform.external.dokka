@@ -94,7 +94,9 @@ class JavadocParser(
                     when (tagName) {
                         "param" -> {
                             section.appendTypeElement(signature) {
-                                it.details.find { it.kind == NodeKind.Parameter }?.detailOrNull(NodeKind.Type)
+                                it.details
+                                    .find { node -> node.kind == NodeKind.Parameter && node.name == tag.getSubjectName() }
+                                    ?.detailOrNull(NodeKind.Type)
                             }
                         }
                         "return" -> {
