@@ -94,7 +94,9 @@ class JavadocParser(
                     when (tagName) {
                         "param" -> {
                             section.appendTypeElement(signature) {
-                                it.details.find { it.kind == NodeKind.Parameter }?.detailOrNull(NodeKind.Type)
+                                it.details
+                                    .find { node -> node.kind == NodeKind.Parameter && node.name == tag.getSubjectName() }
+                                    ?.detailOrNull(NodeKind.Type)
                             }
                         }
                         "return" -> {
@@ -249,6 +251,9 @@ class JavadocParser(
         doc.body().childNodes().forEach {
             convertHtmlNode(it)?.let { append(it) }
         }
+        doc.head().childNodes().forEach {
+            convertHtmlNode(it)?.let { append(it) }
+        }
     }
 
     private fun ContentBlock.convertJavadocElementsToAttrDesc(elements: Iterable<PsiElement>, element: PsiNamedElement) {
@@ -352,6 +357,22 @@ class JavadocParser(
             else ContentParagraph()
         }
 
+        "script" -> {
+
+            // If the `type` attr is an empty string, we want to use null instead so that the resulting generated
+            // Javascript does not contain a `type` attr.
+            //
+            // Example:
+            // type == ""   => <script type="" src="...">
+            // type == null => <script src="...">
+            val type = if (element.attr("type").isNotEmpty()) {
+                element.attr("type")
+            } else {
+                null
+            }
+            ScriptBlock(type, element.attr("src"))
+        }
+
         else -> ContentBlock()
     }
 
@@ -420,7 +441,7 @@ class JavadocParser(
             if (externalLink != null || linkSignature != null) {
                 val labelText = tag.dataElements.firstOrNull { it is PsiDocToken }?.text ?: valueElement!!.text
                 val linkTarget = if (externalLink != null) "href=\"$externalLink\"" else "docref=\"$linkSignature\""
-                val link = "<a $linkTarget>${labelText.htmlEscape()}</a>"
+                val link = "<a $linkTarget>$labelText</a>"
                 if (tag.name == "link") "<code>$link</code>" else link
             } else if (valueElement != null) {
                 valueElement.text
@@ -462,8 +483,10 @@ class JavadocParser(
             }
         }
 
-        // Ignore the @usesMathJax tag
-        "usesMathJax" -> ""
+        // Loads MathJax script from local source, which then updates MathJax HTML code
+        "usesMathJax" -> {
+            "<script src=\"/_static/js/managed/mathjax/MathJax.js?config=TeX-AMS_SVG\"></script>"
+        }
 
         else -> tag.text
     }
