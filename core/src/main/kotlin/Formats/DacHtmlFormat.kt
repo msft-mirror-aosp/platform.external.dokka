@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import kotlinx.html.*
 import org.jetbrains.dokka.*
+import org.jetbrains.dokka.Samples.DevsiteSampleProcessingService
 import org.jetbrains.dokka.Utilities.firstSentence
 import org.w3c.dom.html.HTMLElement
 import java.lang.Math.max
@@ -891,6 +892,7 @@ class DacFormatDescriptor : JavaLayoutHtmlFormatDescriptorBase(), DefaultAnalysi
     override val languageServiceClass = KotlinLanguageService::class
     override val packageListServiceClass: KClass<out PackageListService> = JavaLayoutHtmlPackageListService::class
     override val outputBuilderFactoryClass: KClass<out JavaLayoutHtmlFormatOutputBuilderFactory> = DevsiteLayoutHtmlFormatOutputBuilderFactoryImpl::class
+    override val sampleProcessingService = DevsiteSampleProcessingService::class
 }
 
 
