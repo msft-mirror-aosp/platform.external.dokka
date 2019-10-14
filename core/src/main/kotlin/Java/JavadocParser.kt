@@ -94,7 +94,9 @@ class JavadocParser(
                     when (tagName) {
                         "param" -> {
                             section.appendTypeElement(signature) {
-                                it.details.find { it.kind == NodeKind.Parameter }?.detailOrNull(NodeKind.Type)
+                                it.details
+                                    .find { node -> node.kind == NodeKind.Parameter && node.name == tag.getSubjectName() }
+                                    ?.detailOrNull(NodeKind.Type)
                             }
                         }
                         "return" -> {
@@ -355,7 +357,21 @@ class JavadocParser(
             else ContentParagraph()
         }
 
-        "script" -> ScriptBlock(element.attr("type"), element.attr("src"))
+        "script" -> {
+
+            // If the `type` attr is an empty string, we want to use null instead so that the resulting generated
+            // Javascript does not contain a `type` attr.
+            //
+            // Example:
+            // type == ""   => <script type="" src="...">
+            // type == null => <script src="...">
+            val type = if (element.attr("type").isNotEmpty()) {
+                element.attr("type")
+            } else {
+                null
+            }
+            ScriptBlock(type, element.attr("src"))
+        }
 
         else -> ContentBlock()
     }
@@ -467,10 +483,9 @@ class JavadocParser(
             }
         }
 
-        // Loads script from CDN, ScriptBlock objects constructs HTML object
+        // Loads MathJax script from local source, which then updates MathJax HTML code
         "usesMathJax" -> {
-            "<script type=\"text/javascript\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/" +
-                    "latest.js?config=TeX-AMS_SVG\"></script>"
+            "<script src=\"/_static/js/managed/mathjax/MathJax.js?config=TeX-AMS_SVG\"></script>"
         }
 
         else -> tag.text
