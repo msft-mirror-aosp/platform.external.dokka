@@ -448,6 +448,15 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
         }
     }
 
+    override fun FlowContent.contentBlockSampleCode(content: ContentBlockSampleCode) {
+        pre {
+            attributes["class"] = "prettyprint"
+            contentNodesToMarkup(content.importsBlock.children)
+            +"\n\n"
+            contentNodesToMarkup(content.children)
+        }
+    }
+
     override fun generatePackage(page: Page.PackagePage) = templateService.composePage(
             page,
             htmlConsumer,
