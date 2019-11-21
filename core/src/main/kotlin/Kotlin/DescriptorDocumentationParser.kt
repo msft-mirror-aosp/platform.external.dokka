@@ -71,6 +71,8 @@ class DescriptorDocumentationParser @Inject constructor(
                 ?.resolveToDescriptorIfAny()
                 ?: descriptor
 
+        // This will build the initial node for all content above the tags, however we also sometimes have @Sample
+        // tags between content, so we handle that case below
         var kdocText = kdoc.getContent()
         // workaround for code fence parsing problem in IJ markdown parser
         if (kdocText.endsWith("```") || kdocText.endsWith("~~~")) {
@@ -83,8 +85,15 @@ class DescriptorDocumentationParser @Inject constructor(
             val tags = kdoc.getTags()
             tags.forEach {
                 when (it.knownTag) {
-                    KDocKnownTag.SAMPLE ->
+                    KDocKnownTag.SAMPLE -> {
                         content.append(sampleService.resolveSample(contextDescriptor, it.getSubjectName(), it))
+                        // If the sample tag has text below it, it will be considered as the child of the tag, so add it
+                        val tagSubContent = it.getContent()
+                        if (tagSubContent.isNotBlank()) {
+                            val markdownNode = parseMarkdown(tagSubContent)
+                            buildInlineContentTo(markdownNode, content, LinkResolver(linkMap, { href -> linkResolver.resolveContentLink(contextDescriptor, href) }))
+                        }
+                    }
                     KDocKnownTag.SEE ->
                         content.addTagToSeeAlso(contextDescriptor, it)
                     else -> {
