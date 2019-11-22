@@ -5,8 +5,8 @@ import com.google.inject.name.Named
 import kotlinx.html.*
 import org.jetbrains.dokka.*
 import org.jetbrains.dokka.Samples.DevsiteSampleProcessingService
+import org.jetbrains.dokka.Kotlin.ParameterInfoNode
 import org.jetbrains.dokka.Utilities.firstSentence
-import org.w3c.dom.html.HTMLElement
 import java.lang.Math.max
 import java.net.URI
 import java.util.Collections.emptyMap
@@ -119,15 +119,25 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                         +name
                                     }
                                 }
-                                sections.forEach {
+                                sections.forEach { section ->
                                     tr {
                                         td {
-                                            code {
-                                                it.subjectName?.let { +it }
+                                            val parameterInfoNode = section.children.find { it is ParameterInfoNode } as? ParameterInfoNode
+                                            // If there is no info found, just display the parameter
+                                            // name.
+                                            if (parameterInfoNode?.parameterContent == null) {
+                                                code {
+                                                    section.subjectName?.let { +it }
+                                                }
+                                            } else {
+                                                // Add already marked up type information here
+                                                metaMarkup(
+                                                    listOf(parameterInfoNode.parameterContent!!)
+                                                )
                                             }
                                         }
                                         td {
-                                            metaMarkup(it.children)
+                                            metaMarkup(section.children)
                                         }
                                     }
                                 }
