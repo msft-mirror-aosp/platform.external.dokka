@@ -24,5 +24,6 @@ allprojects { project ->
         }
         zipMaven.dependsOn(":runners:android-gradle-plugin:publishToDistMaven")
         zipMaven.dependsOn(":runners:gradle-plugin:publishToDistMaven")
+        zipMaven.dependsOn(":runners:fatjar:publishToDistMaven")
     }
 }
