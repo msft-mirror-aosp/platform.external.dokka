@@ -363,13 +363,12 @@ class KotlinLanguageService : CommonLanguageService() {
 
         symbol("(")
         val parameters = node.details(NodeKind.Parameter)
-        renderList(parameters) {
-            indentedSoftLineBreak()
+        renderHardWrappingList(parameters) {
             renderParameter(it, renderMode)
         }
         if (needReturnType(node)) {
-            if (parameters.isNotEmpty()) {
-                softLineBreak()
+            if (parameters.size > 1) {
+                hardLineBreak()
             }
             symbol(")")
             symbol(": ")
