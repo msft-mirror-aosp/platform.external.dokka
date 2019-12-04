@@ -67,6 +67,10 @@ class DacAsJavaFormatTest {
         verifyJavaHtmlNode("javaSeeTag")
     }
 
+    @Test fun javaConstructor() {
+        verifyJavaHtmlNode("javaConstructor")
+    }
+
     private fun verifyJavaHtmlNode(fileName: String, withKotlinRuntime: Boolean = false) {
         verifyJavaHtmlNodes(fileName, withKotlinRuntime) { model -> model.members.single().members }
     }
