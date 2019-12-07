@@ -255,8 +255,7 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
     }
 
     fun PsiMethod.build(): DocumentationNode {
-        val node = nodeForElement(this, nodeKind(),
-                if (isConstructor) "<init>" else name)
+        val node = nodeForElement(this, nodeKind(), name)
 
         if (!isConstructor) {
             node.appendType(returnType)
