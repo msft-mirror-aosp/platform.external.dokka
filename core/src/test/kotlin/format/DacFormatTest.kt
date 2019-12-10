@@ -16,9 +16,9 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.net.URI
 
-class DacAsJavaFormatTest: DacFormatTestCase() {
-    override val formatDescriptor = DacAsJavaFormatDescriptor()
-    override val dokkaFormat = "dac-as-java"
+class DacFormatTest: DacFormatTestCase() {
+    override val formatDescriptor = DacFormatDescriptor()
+    override val dokkaFormat = "dac"
 
     @Test fun javaSeeTag() {
         verifyJavaHtmlNode("javaSeeTag")
