@@ -27,4 +27,8 @@ class DacAsJavaFormatTest: DacFormatTestCase() {
     @Test fun javaConstructor() {
         verifyJavaHtmlNode("javaConstructor")
     }
+
+    @Test fun javaDefaultConstructor() {
+        verifyJavaHtmlNode("javaDefaultConstructor")
+    }
 }
