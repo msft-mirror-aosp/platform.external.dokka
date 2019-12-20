@@ -20,7 +20,7 @@ fun getSignature(element: PsiElement?) = when(element) {
     is PsiClass -> element.qualifiedName
     is PsiField -> element.containingClass!!.qualifiedName + "$" + element.name
     is PsiMethod ->
-        element.containingClass!!.qualifiedName + "$" + element.name + "(" +
+        element.containingClass?.qualifiedName + "$" + element.name + "(" +
                 element.parameterList.parameters.map { it.type.typeSignature() }.joinToString(",") + ")"
     else -> null
 }
@@ -175,7 +175,7 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
                         element.isInternal())
 
     private fun skipElementBySuppressedFiles(element: Any): Boolean =
-            element is PsiElement && File(element.containingFile.virtualFile.path).absoluteFile in options.suppressedFiles
+            element is PsiElement && element.containingFile.virtualFile != null && File(element.containingFile.virtualFile.path).absoluteFile in options.suppressedFiles
 
     private fun PsiElement.isInternal(): Boolean {
         val ktElement = (this as? KtLightElement<*, *>)?.kotlinOrigin ?: return false
@@ -204,8 +204,16 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
                 link(superClass, node, RefKind.Inheritor)
             }
         }
+        var methodsAndConstructors = methods
+
+        if (constructors.isEmpty()) {
+            // Having no constructor represents a class that only has an implicit/default constructor
+            // so we create one synthetically for documentation
+            val factory = JavaPsiFacade.getElementFactory(this.project)
+            methodsAndConstructors += factory.createMethodFromText("public $name() {}", this)
+        }
         node.appendDetails(typeParameters) { build() }
-        node.appendMembers(methods) { build() }
+        node.appendMembers(methodsAndConstructors) { build() }
         node.appendMembers(fields) { build() }
         node.appendMembers(innerClasses) { build() }
         register(this, node)
@@ -255,8 +263,7 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
     }
 
     fun PsiMethod.build(): DocumentationNode {
-        val node = nodeForElement(this, nodeKind(),
-                if (isConstructor) "<init>" else name)
+        val node = nodeForElement(this, nodeKind(), name)
 
         if (!isConstructor) {
             node.appendType(returnType)
