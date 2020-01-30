@@ -11,6 +11,8 @@ class NewJavaLanguageService : CommonLanguageService() {
         return true
     }
 
+    private val fullOnlyModifiers = setOf("public", "protected", "private")
+
     override fun render(node: DocumentationNode, renderMode: RenderMode): ContentNode {
         return content {
             (when (node.kind) {
@@ -39,7 +41,11 @@ class NewJavaLanguageService : CommonLanguageService() {
         when (node.name) {
             "open", "internal" -> {
             }
-            else -> super.renderModifier(block, node, renderMode, nowrap)
+            else -> {
+                if (node.name !in fullOnlyModifiers || renderMode == RenderMode.FULL) {
+                    super.renderModifier(block, node, renderMode, nowrap)
+                }
+            }
         }
     }
 
