@@ -4,11 +4,15 @@ import com.google.inject.Guice
 import com.google.inject.Injector
 import com.google.inject.Module
 import com.google.inject.name.Names
-import org.jetbrains.dokka.*
+import org.jetbrains.dokka.DocumentationOptions
+import org.jetbrains.dokka.DokkaLogger
 import org.jetbrains.dokka.Formats.JavaLayoutHtmlFormatDescriptorBase
 import org.jetbrains.dokka.Formats.JavaLayoutHtmlFormatGenerator
+import org.jetbrains.dokka.Generator
 import org.jetbrains.dokka.Utilities.bind
-import org.jetbrains.dokka.tests.verifyJavaOutput
+import org.jetbrains.dokka.tests.assertEqualsIgnoringSeparators
+import org.jetbrains.dokka.tests.verifyModel
+import org.jetbrains.kotlin.cli.jvm.config.JavaSourceRoot
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.io.File
@@ -62,28 +66,25 @@ abstract class DacFormatTestCase {
         })
     }
 
-    protected fun verifyJavaHtmlNode(fileName: String, withKotlinRuntime: Boolean = false) {
-        verifyJavaHtmlNodes(fileName, withKotlinRuntime) { model -> model.members.single().members }
-    }
-
-    private fun verifyJavaHtmlNodes(fileName: String,
-                                    withKotlinRuntime: Boolean = false,
-                                    format: String = dokkaFormat,
-                                    nodeFilter: (DocumentationModule) -> List<DocumentationNode>
-    ) {
-        verifyJavaOutput("testdata/format/$dokkaFormat/$fileName.java",".html", format = format, withKotlinRuntime = withKotlinRuntime) { model, output ->
-            buildPagesAndReadInto(model, nodeFilter(model), output)
-        }
-    }
-
-    protected fun buildPagesAndReadInto(model: DocumentationNode, nodes: List<DocumentationNode>, sb: StringBuilder) =
-        with(injector.getInstance(Generator::class.java)) {
-            this as JavaLayoutHtmlFormatGenerator
-            buildPages(listOf(model))
-            val byLocations = nodes.groupBy { mainUri(it) }
-            val tmpFolder = folder.root.toURI().resolve(model.name+"/")
-            byLocations.forEach { (loc, _) ->
-                sb.append(tmpFolder.resolve(URI("/").relativize(loc)).toURL().readText())
+    protected fun verifyDirectory(directory: String) {
+        val directoryFile = File("testdata/format/$dokkaFormat/$directory")
+        verifyModel(
+            JavaSourceRoot(directoryFile, null),
+            format = dokkaFormat
+        ) { documentationModule ->
+            val nodes = documentationModule.members.single().members
+            with(injector.getInstance(Generator::class.java)) {
+                this as JavaLayoutHtmlFormatGenerator
+                buildPages(listOf(documentationModule))
+                val byLocations = nodes.groupBy { mainUri(it) }
+                val tmpFolder = folder.root.toURI().resolve("${documentationModule.name}/")
+                byLocations.forEach { (loc, node) ->
+                    val output = StringBuilder()
+                    output.append(tmpFolder.resolve(URI("/").relativize(loc)).toURL().readText())
+                    val expectedFile = File(directoryFile, "${node.first().name}.html")
+                    assertEqualsIgnoringSeparators(expectedFile, output.toString())
+                }
             }
         }
+    }
 }
