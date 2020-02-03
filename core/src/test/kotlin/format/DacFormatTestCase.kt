@@ -19,55 +19,54 @@ import java.io.File
 import java.net.URI
 
 abstract class DacFormatTestCase {
-    abstract val formatDescriptor: JavaLayoutHtmlFormatDescriptorBase
-    abstract val dokkaFormat: String
     @get:Rule
     var folder = TemporaryFolder()
 
-    val injector: Injector by lazy {
-        val options =
-            DocumentationOptions(
-                folder.toString(),
-                dokkaFormat,
-                apiVersion = null,
-                languageVersion = null,
-                generateClassIndexPage = false,
-                generatePackageIndexPage = false,
-                noStdlibLink = false,
-                noJdkLink = false,
-                collectInheritedExtensionsFromLibraries = true
-            )
+    protected fun verifyDirectory(directory: String, formatDescriptor: JavaLayoutHtmlFormatDescriptorBase, dokkaFormat: String) {
+        val injector: Injector by lazy {
+            val options =
+                DocumentationOptions(
+                    folder.toString(),
+                    dokkaFormat,
+                    apiVersion = null,
+                    languageVersion = null,
+                    generateClassIndexPage = false,
+                    generatePackageIndexPage = false,
+                    noStdlibLink = false,
+                    noJdkLink = false,
+                    collectInheritedExtensionsFromLibraries = true
+                )
 
-        Guice.createInjector(Module { binder ->
+            Guice.createInjector(Module { binder ->
 
-            binder.bind<Boolean>().annotatedWith(Names.named("generateClassIndex")).toInstance(false)
-            binder.bind<Boolean>().annotatedWith(Names.named("generatePackageIndex")).toInstance(false)
+                binder.bind<Boolean>().annotatedWith(Names.named("generateClassIndex")).toInstance(false)
+                binder.bind<Boolean>().annotatedWith(Names.named("generatePackageIndex")).toInstance(false)
 
-            binder.bind<String>().annotatedWith(Names.named("dacRoot")).toInstance("")
-            binder.bind<String>().annotatedWith(Names.named("outlineRoot")).toInstance("")
-            binder.bind<File>().annotatedWith(Names.named("outputDir")).toInstance(folder.root)
+                binder.bind<String>().annotatedWith(Names.named("dacRoot")).toInstance("")
+                binder.bind<String>().annotatedWith(Names.named("outlineRoot")).toInstance("")
+                binder.bind<File>().annotatedWith(Names.named("outputDir")).toInstance(folder.root)
 
-            binder.bind<DocumentationOptions>().toProvider { options }
-            binder.bind<DokkaLogger>().toInstance(object : DokkaLogger {
-                override fun info(message: String) {
-                    println(message)
-                }
+                binder.bind<DocumentationOptions>().toProvider { options }
+                binder.bind<DokkaLogger>().toInstance(object : DokkaLogger {
+                    override fun info(message: String) {
+                        println(message)
+                    }
 
-                override fun warn(message: String) {
-                    println("WARN: $message")
-                }
+                    override fun warn(message: String) {
+                        println("WARN: $message")
+                    }
 
-                override fun error(message: String) {
-                    println("ERROR: $message")
-                }
+                    override fun error(message: String) {
+                        println("ERROR: $message")
+                    }
+                })
+
+                formatDescriptor.configureOutput(binder)
             })
+        }
 
-            formatDescriptor.configureOutput(binder)
-        })
-    }
 
-    protected fun verifyDirectory(directory: String) {
-        val directoryFile = File("testdata/format/$dokkaFormat/$directory")
+        val directoryFile = File("testdata/format/dac/$directory")
         verifyModel(
             JavaSourceRoot(directoryFile, null),
             format = dokkaFormat
@@ -81,7 +80,7 @@ abstract class DacFormatTestCase {
                 byLocations.forEach { (loc, node) ->
                     val output = StringBuilder()
                     output.append(tmpFolder.resolve(URI("/").relativize(loc)).toURL().readText())
-                    val expectedFile = File(directoryFile, "${node.first().name}.html")
+                    val expectedFile = File(File(directoryFile, dokkaFormat), "${node.first().name}.html")
                     assertEqualsIgnoringSeparators(expectedFile, output.toString())
                 }
             }
