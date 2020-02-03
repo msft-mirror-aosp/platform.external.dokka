@@ -30,4 +30,8 @@ class DacAsJavaFormatTest: DacFormatTestCase() {
     @Test fun javaMethodVisibilities() {
         verifyDirectory("javaMethodVisibilities")
     }
+
+    @Test fun javaClassLinks() {
+        verifyDirectory("javaClassLinks")
+    }
 }
