@@ -14,4 +14,8 @@ class DacFormatTest: DacFormatTestCase() {
     @Test fun javaConstructor() {
         verifyDirectory("javaConstructor")
     }
+
+    @Test fun javaClassLinks() {
+        verifyDirectory("javaClassLinks")
+    }
 }
