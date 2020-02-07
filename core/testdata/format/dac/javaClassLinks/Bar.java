@@ -3,6 +3,11 @@ import java.util.HashSet;
 
 public class Bar {
 	/**
+	 * @return The best of bars.
+	 */
+	public Bar() { }
+
+	/**
 	 * @param input The best foo you can find
 	 * @return Another spectacular Foo for you to use.
 	 */
@@ -10,7 +15,14 @@ public class Bar {
 
 	/**
 	 * @param input The best set you can afford.
-	 * @return A list that is full of joy.
+	 * @return
 	 */
 	public ArrayList<String> getMyList(HashSet input) { return null; }
+
+	/**
+	 * @return {@code true} if the fun mode available, {@code false} otherwise.
+	 */
+	public boolean isFunAvailable() { throw new RuntimeException("Stub!"); }
+
+
 }
