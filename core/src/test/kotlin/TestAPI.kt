@@ -138,12 +138,13 @@ fun verifyPackageMember(source: String,
 
 fun verifyJavaModel(source: String,
                     withKotlinRuntime: Boolean = false,
+                    format: String = "html",
                     verifier: (DocumentationModule) -> Unit) {
     val tempDir = FileUtil.createTempDirectory("dokka", "")
     try {
         val sourceFile = File(source)
         FileUtil.copy(sourceFile, File(tempDir, sourceFile.name))
-        verifyModel(JavaSourceRoot(tempDir, null), withJdk = true, withKotlinRuntime = withKotlinRuntime, verifier = verifier)
+        verifyModel(JavaSourceRoot(tempDir, null), format = format, withJdk = true, withKotlinRuntime = withKotlinRuntime, verifier = verifier)
     }
     finally {
         FileUtil.delete(tempDir)
@@ -219,8 +220,9 @@ fun verifyOutput(
 fun verifyJavaOutput(path: String,
                      outputExtension: String,
                      withKotlinRuntime: Boolean = false,
+                     format: String = "html",
                      outputGenerator: (DocumentationModule, StringBuilder) -> Unit) {
-    verifyJavaModel(path, withKotlinRuntime) { model ->
+    verifyJavaModel(path, withKotlinRuntime, format) { model ->
         verifyModelOutput(model, outputExtension, path, outputGenerator)
     }
 }

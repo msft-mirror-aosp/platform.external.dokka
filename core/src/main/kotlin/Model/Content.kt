@@ -104,7 +104,7 @@ object ContentIndentedSoftLineBreak: ContentNode {
     override val textLength: Int
         get() = 0
 }
-class ScriptBlock(val type: String, val src: String) : ContentBlock()
+class ScriptBlock(val type: String?, val src: String) : ContentBlock()
 
 class ContentParagraph() : ContentBlock()
 class ContentEmphasis() : ContentBlock()
