@@ -124,7 +124,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                                 }
                                             }
                                             td {
-                                                if (it.children.size > 2) {
+                                                if (it.children.size > 1) {
                                                     metaMarkup(it.children.subList(1, it.children.size))
                                                 }
                                             }
