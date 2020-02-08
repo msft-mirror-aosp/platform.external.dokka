@@ -185,7 +185,9 @@ open class TypeAdapter(override val module: ModuleNodeAdapter, override val node
                 NodeKind.Exception -> module.classNamed(qualifiedTypeName()) ?: ClassDocumentationNodeAdapter(module, node)
 
                 else -> when {
-                    node.links.isNotEmpty() -> TypeAdapter(module, node.links.first()).asClassDoc()
+                    node.links.firstOrNull { it.kind != NodeKind.ExternalLink } != null -> {
+                        TypeAdapter(module, node.links.firstOrNull { it.kind != NodeKind.ExternalLink }!!).asClassDoc()
+                    }
                     else -> ClassDocumentationNodeAdapter(module, node) // TODO ?
                 }
             }
