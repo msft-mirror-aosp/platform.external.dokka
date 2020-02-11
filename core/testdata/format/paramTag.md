@@ -2,7 +2,7 @@
 
 # f
 
-`fun f(x: String, y: Int): Unit`
+`fun f(    x: String,     y: Int): Unit`
 
 ### Parameters
 

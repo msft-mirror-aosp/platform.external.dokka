@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
@@ -20,7 +21,7 @@ fun getSignature(element: PsiElement?) = when(element) {
     is PsiClass -> element.qualifiedName
     is PsiField -> element.containingClass!!.qualifiedName + "$" + element.name
     is PsiMethod ->
-        element.containingClass!!.qualifiedName + "$" + element.name + "(" +
+        element.containingClass?.qualifiedName + "$" + element.name + "(" +
                 element.parameterList.parameters.map { it.type.typeSignature() }.joinToString(",") + ")"
     else -> null
 }
@@ -47,6 +48,7 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
     private val options: DocumentationOptions
     private val refGraph: NodeReferenceGraph
     private val docParser: JavaDocumentationParser
+    private val externalDocumentationLinkResolver: ExternalDocumentationLinkResolver
 
     @Inject constructor(
             options: DocumentationOptions,
@@ -58,12 +60,19 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
         this.options = options
         this.refGraph = refGraph
         this.docParser = JavadocParser(refGraph, logger, signatureProvider, externalDocumentationLinkResolver)
+        this.externalDocumentationLinkResolver = externalDocumentationLinkResolver
     }
 
-    constructor(options: DocumentationOptions, refGraph: NodeReferenceGraph, docParser: JavaDocumentationParser) {
+    constructor(
+        options: DocumentationOptions,
+        refGraph: NodeReferenceGraph,
+        docParser: JavaDocumentationParser,
+        externalDocumentationLinkResolver: ExternalDocumentationLinkResolver
+    ) {
         this.options = options
         this.refGraph = refGraph
         this.docParser = docParser
+        this.externalDocumentationLinkResolver = externalDocumentationLinkResolver
     }
 
     override fun appendFile(file: PsiJavaFile, module: DocumentationModule, packageContent: Map<String, Content>) {
@@ -175,7 +184,7 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
                         element.isInternal())
 
     private fun skipElementBySuppressedFiles(element: Any): Boolean =
-            element is PsiElement && File(element.containingFile.virtualFile.path).absoluteFile in options.suppressedFiles
+            element is PsiElement && element.containingFile.virtualFile != null && File(element.containingFile.virtualFile.path).absoluteFile in options.suppressedFiles
 
     private fun PsiElement.isInternal(): Boolean {
         val ktElement = (this as? KtLightElement<*, *>)?.kotlinOrigin ?: return false
@@ -204,8 +213,16 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
                 link(superClass, node, RefKind.Inheritor)
             }
         }
+        var methodsAndConstructors = methods
+
+        if (constructors.isEmpty()) {
+            // Having no constructor represents a class that only has an implicit/default constructor
+            // so we create one synthetically for documentation
+            val factory = JavaPsiFacade.getElementFactory(this.project)
+            methodsAndConstructors += factory.createMethodFromText("public $name() {}", this)
+        }
         node.appendDetails(typeParameters) { build() }
-        node.appendMembers(methods) { build() }
+        node.appendMembers(methodsAndConstructors) { build() }
         node.appendMembers(fields) { build() }
         node.appendMembers(innerClasses) { build() }
         register(this, node)
@@ -255,8 +272,7 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
     }
 
     fun PsiMethod.build(): DocumentationNode {
-        val node = nodeForElement(this, nodeKind(),
-                if (isConstructor) "<init>" else name)
+        val node = nodeForElement(this, nodeKind(), name)
 
         if (!isConstructor) {
             node.appendType(returnType)
@@ -302,7 +318,20 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
         if (psiType == null) {
             return
         }
-        append(psiType.build(kind), RefKind.Detail)
+
+        val node = psiType.build(kind)
+        append(node, RefKind.Detail)
+
+        // Attempt to create an external link if the psiType is one
+        if (psiType is PsiClassReferenceType) {
+            val target = psiType.reference.resolve()
+            if (target != null) {
+                val externalLink = externalDocumentationLinkResolver.buildExternalDocumentationLink(target)
+                if (externalLink != null) {
+                    node.append(DocumentationNode(externalLink, Content.Empty, NodeKind.ExternalLink), RefKind.Link)
+                }
+            }
+        }
     }
 
     fun PsiType.build(kind: NodeKind = NodeKind.Type): DocumentationNode {
