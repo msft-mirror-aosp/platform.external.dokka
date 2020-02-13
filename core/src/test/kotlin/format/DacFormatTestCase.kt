@@ -12,6 +12,7 @@ import org.jetbrains.dokka.Generator
 import org.jetbrains.dokka.Utilities.bind
 import org.jetbrains.dokka.tests.assertEqualsIgnoringSeparators
 import org.jetbrains.dokka.tests.verifyModel
+import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
 import org.jetbrains.kotlin.cli.jvm.config.JavaSourceRoot
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -68,7 +69,7 @@ abstract class DacFormatTestCase {
 
         val directoryFile = File("testdata/format/dac/$directory")
         verifyModel(
-            JavaSourceRoot(directoryFile, null),
+            JavaSourceRoot(directoryFile, null), KotlinSourceRoot(directoryFile.path, false),
             format = dokkaFormat
         ) { documentationModule ->
             val nodes = documentationModule.members.single().members
