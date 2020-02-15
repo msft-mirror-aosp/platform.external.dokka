@@ -1,0 +1,4 @@
+/**
+ * @see Foo
+ */
+class Bar
