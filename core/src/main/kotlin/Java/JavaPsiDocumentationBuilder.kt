@@ -206,13 +206,26 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
             else -> NodeKind.Class
         }
         val node = nodeForElement(this, kind)
-        superTypes.filter { !ignoreSupertype(it) }.forEach {
-            node.appendType(it, NodeKind.Supertype)
-            val superClass = it.resolve()
-            if (superClass != null) {
+        superTypes.filter { !ignoreSupertype(it) }.forEach { superType ->
+            node.appendType(superType, NodeKind.Supertype)
+            val superClass = superType.resolve()
+            // parentNode is the actual DocumentationNode of this class's supertype
+            // It is necessary to create documentation links back to the superclass from inherited methods
+            val parentNode = refGraph.lookup(superType.typeSignature())
+            if (superClass != null && parentNode != null) {
                 link(superClass, node, RefKind.Inheritor)
+                // Explicitly add the methods of the superclass (which are not overridden) as nodes to this class
+                val overriddenMethods = methods.toList().flatMap { it.findSuperMethods().toList() }
+                val inheritedMethods = superClass.methods.filter { it !in overriddenMethods }.toTypedArray()
+
+                node.appendChildren(inheritedMethods, RefKind.InheritedMember) {
+                    val child = build()
+                    child.addReferenceTo(parentNode, RefKind.Owner)
+                    return@appendChildren child
+                }
             }
         }
+
         var methodsAndConstructors = methods
 
         if (constructors.isEmpty()) {
