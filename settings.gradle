@@ -5,7 +5,8 @@ include 'core',
         'runners:fatjar',
         'runners:ant',
         'runners:cli',
-        'runners:maven-plugin',
+        // Google's fork does not use maven-plugin. Removing it from build for convenience.
+        // 'runners:maven-plugin',
         'runners:gradle-plugin',
         'runners:android-gradle-plugin',
         'runners:gradle-integration-tests'
