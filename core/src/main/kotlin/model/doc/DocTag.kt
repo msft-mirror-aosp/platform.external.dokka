@@ -12,12 +12,23 @@ sealed class DocTag(
 
         return this.children.joinToString(" ") { it.docTagSummary() }
     }
+
+    override fun equals(other: Any?): Boolean =
+        (
+            other != null &&
+            other::class == this::class &&
+            this.children == (other as DocTag).children &&
+            this.params == other.params
+        )
+
+    override fun hashCode(): Int = children.hashCode() + params.hashCode()
 }
 
 class A(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())                : DocTag(children, params)
 class Big(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())              : DocTag(children, params)
 class B(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())                : DocTag(children, params)
 class BlockQuote(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())       : DocTag(children, params)
+object Br                                                                                              : DocTag(emptyList(), emptyMap())
 class Cite(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())             : DocTag(children, params)
 class Code(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())             : DocTag(children, params)
 class Dd(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())               : DocTag(children, params)
@@ -64,7 +75,10 @@ class Strong(children: List<DocTag> = emptyList(), params: Map<String, String> =
 class Sub(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())              : DocTag(children, params)
 class Sup(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())              : DocTag(children, params)
 class Table(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())            : DocTag(children, params)
-class Text(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap(), val body: String = "") : DocTag(children, params)
+class Text(val body: String = "", children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap()) : DocTag(children, params) {
+    override fun equals(other: Any?): Boolean = super.equals(other) && this.body == (other as Text).body
+    override fun hashCode(): Int = super.hashCode() + body.hashCode()
+}
 class TBody(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())            : DocTag(children, params)
 class Td(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())               : DocTag(children, params)
 class TFoot(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())            : DocTag(children, params)
@@ -76,6 +90,9 @@ class Tt(children: List<DocTag> = emptyList(), params: Map<String, String> = emp
 class U(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())                : DocTag(children, params)
 class Ul(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())               : DocTag(children, params)
 class Var(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())              : DocTag(children, params)
-class DocumentationLink(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap(), val dri: DRI) : DocTag(children, params)
-class HorizontalRule                                                                                   : DocTag(emptyList(), emptyMap())
+class DocumentationLink(val dri: DRI, children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap()) : DocTag(children, params) {
+    override fun equals(other: Any?): Boolean = super.equals(other) && this.dri == (other as DocumentationLink).dri
+    override fun hashCode(): Int = super.hashCode() + dri.hashCode()
+}
+object HorizontalRule                                                                                  : DocTag(emptyList(), emptyMap())
 class CustomDocTag(children: List<DocTag> = emptyList(), params: Map<String, String> = emptyMap())     : DocTag(children, params)

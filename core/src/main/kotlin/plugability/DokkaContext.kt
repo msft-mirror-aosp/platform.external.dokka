@@ -14,8 +14,10 @@ import kotlin.reflect.full.createInstance
 interface DokkaContext {
     fun <T : DokkaPlugin> plugin(kclass: KClass<T>): T?
 
-    operator fun <T, E> get(point: E, askDefault: AskDefault = AskDefault.WhenEmpty): List<T>
+    operator fun <T, E> get(point: E): List<T>
             where T : Any, E : ExtensionPoint<T>
+
+    fun <T, E> single(point: E): T where T : Any, E : ExtensionPoint<T>
 
     val logger: DokkaLogger
     val configuration: DokkaConfiguration
@@ -25,7 +27,8 @@ interface DokkaContext {
         fun create(
             configuration: DokkaConfiguration,
             logger: DokkaLogger,
-            platforms: Map<PlatformData, EnvironmentAndFacade>
+            platforms: Map<PlatformData, EnvironmentAndFacade>,
+            pluginOverrides: List<DokkaPlugin>
         ): DokkaContext =
             DokkaContextConfigurationImpl(logger, configuration, platforms).apply {
                 configuration.pluginsClasspath.map { it.relativeTo(File(".").absoluteFile).toURI().toURL() }
@@ -33,24 +36,15 @@ interface DokkaContext {
                     .let { URLClassLoader(it, this.javaClass.classLoader) }
                     .also { checkClasspath(it) }
                     .let { ServiceLoader.load(DokkaPlugin::class.java, it) }
+                    .let { it + pluginOverrides }
                     .forEach { install(it) }
                 applyExtensions()
             }.also { it.logInitialisationInfo() }
     }
 }
 
-fun <T, E> DokkaContext.single(point: E): T where T : Any, E : ExtensionPoint<T> {
-    fun throwBadArity(substitution: String): Nothing = throw IllegalStateException(
-        "$point was expected to have exactly one extension registered, but $substitution found."
-    )
-
-    val extensions = get(point, AskDefault.WhenEmpty)
-    return when (extensions.size) {
-        0 -> throwBadArity("none was")
-        1 -> extensions.first()
-        else -> throwBadArity("multiple were")
-    }
-}
+inline fun <reified T: DokkaPlugin> DokkaContext.plugin(): T = plugin(T::class)
+    ?: throw java.lang.IllegalStateException("Plugin ${T::class.qualifiedName} is not present in context.")
 
 interface DokkaContextConfiguration {
     fun addExtensionDependencies(extension: Extension<*>)
@@ -100,13 +94,25 @@ private class DokkaContextConfigurationImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override operator fun <T, E> get(point: E, askDefault: AskDefault) where T : Any, E : ExtensionPoint<T> =
-        when (askDefault) {
-            AskDefault.Never -> actions(point).orEmpty()
-            AskDefault.Always -> actions(point).orEmpty() + DefaultExtensions.get(point, this)
-            AskDefault.WhenEmpty ->
-                actions(point)?.takeIf { it.isNotEmpty() } ?: DefaultExtensions?.get(point, this)
-        } as List<T>
+    override operator fun <T, E> get(point: E) where T : Any, E : ExtensionPoint<T> =
+        actions(point).orEmpty() as List<T>
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T, E> single(point: E): T where T : Any, E : ExtensionPoint<T> {
+        fun throwBadArity(substitution: String): Nothing = throw IllegalStateException(
+            "$point was expected to have exactly one extension registered, but $substitution found."
+        )
+
+        val extensions = extensions[point].orEmpty() as List<Extension<T>>
+        return when (extensions.size) {
+            0 -> throwBadArity("none was")
+            1 -> extensions.single().action.get(this)
+            else -> {
+                val notFallbacks = extensions.filterNot { it.isFallback }
+                if (notFallbacks.size == 1)  notFallbacks.single().action.get(this) else throwBadArity("many were")
+            }
+        }
+    }
 
     private fun <E : ExtensionPoint<*>> actions(point: E) = extensions[point]?.map { it.action.get(this) }
 
@@ -119,7 +125,7 @@ private class DokkaContextConfigurationImpl(
     fun install(plugin: DokkaPlugin) {
         plugins[plugin::class] = plugin
         plugin.context = this
-        plugin.internalInstall(this)
+        plugin.internalInstall(this, this.configuration)
     }
 
     override fun addExtensionDependencies(extension: Extension<*>) {
@@ -154,8 +160,4 @@ private fun checkClasspath(classLoader: URLClassLoader) {
                     "Please fix your plugins dependencies or exclude dokka api artifact from plugin classpath"
         )
     }
-}
-
-enum class AskDefault {
-    Always, Never, WhenEmpty
 }

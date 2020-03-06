@@ -6,10 +6,10 @@ include("testApi")
 include("runners:gradle-plugin")
 include("runners:cli")
 include("runners:maven-plugin")
-include("plugins:xml")
+include("plugins:base")
 include("plugins:mathjax")
+include("plugins:kotlin-as-java")
 include("integration-tests:gradle-integration-tests")
-
 
 pluginManagement {
     val kotlin_version: String by settings

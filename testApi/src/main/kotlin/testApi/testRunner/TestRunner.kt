@@ -1,4 +1,4 @@
-package testApi.testRunner
+package org.jetbrains.dokka.testApi.testRunner
 
 import org.jetbrains.dokka.*
 import org.jetbrains.dokka.model.Module
@@ -6,6 +6,7 @@ import org.jetbrains.dokka.pages.ModulePageNode
 import org.jetbrains.dokka.pages.PlatformData
 import org.jetbrains.dokka.pages.RootPageNode
 import org.jetbrains.dokka.plugability.DokkaContext
+import org.jetbrains.dokka.plugability.DokkaPlugin
 import org.jetbrains.dokka.utilities.DokkaConsoleLogger
 import org.junit.rules.TemporaryFolder
 import java.io.File
@@ -21,11 +22,12 @@ abstract class AbstractCoreTest {
 
     protected fun getTestDataDir(name: String) =
         File("src/test/resources/$name").takeIf { it.exists() }?.toPath()
-                ?: throw InvalidPathException(name, "Cannot be found")
+            ?: throw InvalidPathException(name, "Cannot be found")
 
     protected fun testFromData(
         configuration: DokkaConfigurationImpl,
         cleanupOutput: Boolean = true,
+        pluginOverrides: List<DokkaPlugin> = emptyList(),
         block: TestBuilder.() -> Unit
     ) {
         val testMethods = TestBuilder().apply(block).build()
@@ -36,18 +38,25 @@ abstract class AbstractCoreTest {
             configuration.copy(
                 outputDir = tempDir.root.toPath().toAbsolutePath().toString()
             )
-        DokkaTestGenerator(newConfiguration, logger, testMethods).generate()
+        DokkaTestGenerator(
+            newConfiguration,
+            logger,
+            testMethods,
+            pluginOverrides
+        ).generate()
     }
 
     protected fun testInline(
         query: String,
         configuration: DokkaConfigurationImpl,
         cleanupOutput: Boolean = true,
+        pluginOverrides: List<DokkaPlugin> = emptyList(),
         block: TestBuilder.() -> Unit
     ) {
         val testMethods = TestBuilder().apply(block).build()
         val testDirPath = getTempDir(cleanupOutput).root.toPath()
-        val fileMap = query.toFileMap()
+        val fileMap = query//.replace("""\n\s*\n?""".toRegex(), "\n")
+            .replace("""\|/[^\w]""".toRegex()) { it.value.replace("|/", "| /") }.toFileMap()
         fileMap.materializeFiles(testDirPath.toAbsolutePath())
         if (!cleanupOutput)
             logger.info("Output generated under: ${testDirPath.toAbsolutePath()}")
@@ -57,7 +66,12 @@ abstract class AbstractCoreTest {
                 passesConfigurations = configuration.passesConfigurations
                     .map { it.copy(sourceRoots = it.sourceRoots.map { it.copy(path = "${testDirPath.toAbsolutePath()}/${it.path}") }) }
             )
-        DokkaTestGenerator(newConfiguration, logger, testMethods).generate()
+        DokkaTestGenerator(
+            newConfiguration,
+            logger,
+            testMethods,
+            pluginOverrides
+        ).generate()
     }
 
     private fun String.toFileMap(): Map<String, String> = this.trimMargin().removePrefix("|")
@@ -95,6 +109,7 @@ abstract class AbstractCoreTest {
         var documentablesTransformationStage: (Module) -> Unit = {}
         var pagesGenerationStage: (ModulePageNode) -> Unit = {}
         var pagesTransformationStage: (RootPageNode) -> Unit = {}
+        var renderingStage: (RootPageNode, DokkaContext) -> Unit = { a, b -> }
 
         fun build() = TestMethods(
             analysisSetupStage,
@@ -103,7 +118,8 @@ abstract class AbstractCoreTest {
             documentablesMergingStage,
             documentablesTransformationStage,
             pagesGenerationStage,
-            pagesTransformationStage
+            pagesTransformationStage,
+            renderingStage
         )
     }
 
@@ -155,7 +171,7 @@ abstract class AbstractCoreTest {
         var reportUndocumented: Boolean = false,
         var skipEmptyPackages: Boolean = false,
         var skipDeprecated: Boolean = false,
-        var jdkVersion: Int = 6,
+        var jdkVersion: Int = 8,
         var languageVersion: String? = null,
         var apiVersion: String? = null,
         var noStdlibLink: Boolean = false,
@@ -204,5 +220,6 @@ data class TestMethods(
     val documentablesMergingStage: (Module) -> Unit,
     val documentablesTransformationStage: (Module) -> Unit,
     val pagesGenerationStage: (ModulePageNode) -> Unit,
-    val pagesTransformationStage: (RootPageNode) -> Unit
+    val pagesTransformationStage: (RootPageNode) -> Unit,
+    val renderingStage: (RootPageNode, DokkaContext) -> Unit
 )

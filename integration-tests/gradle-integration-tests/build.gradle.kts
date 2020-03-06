@@ -14,7 +14,8 @@ dependencies {
     testImplementation(gradleTestKit())
 
     dokkaPlugin(project(path = ":runners:gradle-plugin"))
-    dokkaCore(project(path = ":core", configuration = "shadow"))
+    dokkaCore(project(path = ":coreDependencies", configuration = "shadow"))
+    dokkaCore(project(path = ":core"))
     kotlinGradle("org.jetbrains.kotlin:kotlin-gradle-plugin")
 }
 
@@ -39,6 +40,6 @@ tasks {
     test {
         systemProperty("android.licenses.overwrite", project.findProperty("android.licenses.overwrite") ?: "")
         inputs.dir(file("testData"))
-//        exclude("*") // TODO: Remove this exclude when tests are migrated
+        exclude("*") // TODO: Remove this exclude when tests are migrated
     }
 }
