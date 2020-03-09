@@ -265,12 +265,11 @@ class DocumentationBuilder
                     node.append(targetNode, RefKind.ExternalType)
                     node.append(DocumentationNode(externalLink, Content.Empty, NodeKind.ExternalLink), RefKind.Link)
                 }
-            } else {
-                link(
-                    node, classifierDescriptor,
-                    if (classifierDescriptor.isBoringBuiltinClass()) RefKind.HiddenLink else RefKind.Link
-                )
             }
+            link(
+                node, classifierDescriptor,
+                if (classifierDescriptor.isBoringBuiltinClass()) RefKind.HiddenLink else RefKind.Link
+            )
             if (classifierDescriptor !is TypeParameterDescriptor) {
                 node.append(
                     DocumentationNode(
