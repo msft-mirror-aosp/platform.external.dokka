@@ -1,5 +1,6 @@
 package org.jetbrains.dokka.plugability
 
+import org.jetbrains.dokka.DokkaConfiguration
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -12,8 +13,7 @@ abstract class DokkaPlugin {
     @PublishedApi
     internal var context: DokkaContext? = null
 
-    protected inline fun <reified T : DokkaPlugin> plugin(): T = context?.plugin(T::class)
-            ?: throw IllegalStateException("Querying about plugins is only possible with dokka context initialised")
+    protected inline fun <reified T : DokkaPlugin> plugin(): T = context?.plugin(T::class) ?: throwIllegalQuery()
 
     protected fun <T : Any> extensionPoint() =
         object : ReadOnlyProperty<DokkaPlugin, ExtensionPoint<T>> {
@@ -23,7 +23,12 @@ abstract class DokkaPlugin {
             )
         }
 
-    protected fun <T : Any> extending(definition: ExtendingDSL.() -> Extension<T>) = ExtensionProvider(definition)
+    protected fun <T : Any> extending(isFallback: Boolean = false, definition: ExtendingDSL.() -> Extension<T>) =
+        if (isFallback) {
+            ExtensionProvider { definition().markedAsFallback() }
+        } else {
+            ExtensionProvider(definition)
+        }
 
     protected class ExtensionProvider<T : Any> internal constructor(
         private val definition: ExtendingDSL.() -> Extension<T>
@@ -36,10 +41,19 @@ abstract class DokkaPlugin {
         }.also { thisRef.extensionDelegates += property }
     }
 
-    internal fun internalInstall(ctx: DokkaContextConfiguration) {
+    internal fun internalInstall(ctx: DokkaContextConfiguration, configuration: DokkaConfiguration) {
         extensionDelegates.asSequence()
             .filterIsInstance<KProperty1<DokkaPlugin, Extension<*>>>() // should be always true
             .map { it.get(this) }
-            .forEach { ctx.addExtensionDependencies(it) }
+            .forEach { if (it.condition.invoke(configuration)) ctx.addExtensionDependencies(it) }
     }
 }
+
+inline fun <reified P : DokkaPlugin, reified E : Any> P.query(extension: P.() -> ExtensionPoint<E>): List<E> =
+    context?.let { it[extension()] } ?: throwIllegalQuery()
+
+inline fun <reified P : DokkaPlugin, reified E : Any> P.querySingle(extension: P.() -> ExtensionPoint<E>): E =
+    context?.single(extension()) ?: throwIllegalQuery()
+
+fun throwIllegalQuery(): Nothing =
+    throw IllegalStateException("Querying about plugins is only possible with dokka context initialised")
