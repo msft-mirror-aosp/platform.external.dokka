@@ -133,6 +133,7 @@ class JavaLayoutHtmlFormatGenerator @Inject constructor(
             val normalized = uri.normalize()
             uriToWriter[normalized]?.let { return it }
             val file = root.resolve(normalized.path.removePrefix("/"))
+            file.parentFile.mkdirsOrFail()
             val writer = file.bufferedWriter()
             uriToWriter[normalized] = writer
             return writer
