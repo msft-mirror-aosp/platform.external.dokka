@@ -15,6 +15,7 @@ allprojects { project ->
                 zipTask.from(report.destination)
             }
         }
+        task.ignoreFailures = true
     }
     if (project.rootProject == project) {
         def zipMaven = project.tasks.create("zipMaven", Zip) {
