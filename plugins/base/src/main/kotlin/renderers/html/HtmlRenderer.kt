@@ -2,11 +2,14 @@ package org.jetbrains.dokka.base.renderers.html
 
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import org.jetbrains.dokka.base.DokkaBase
 import org.jetbrains.dokka.base.renderers.DefaultRenderer
 import org.jetbrains.dokka.links.DRI
-import org.jetbrains.dokka.model.Function
+import org.jetbrains.dokka.model.DFunction
 import org.jetbrains.dokka.pages.*
 import org.jetbrains.dokka.plugability.DokkaContext
+import org.jetbrains.dokka.plugability.plugin
+import org.jetbrains.dokka.plugability.query
 import java.io.File
 
 open class HtmlRenderer(
@@ -15,22 +18,21 @@ open class HtmlRenderer(
 
     private val pageList = mutableListOf<String>()
 
-    override val preprocessors = listOf(
-        RootCreator,
-        SearchPageInstaller,
-        ResourceInstaller,
-        NavigationPageInstaller,
-        StyleAndScriptsAppender
-    )
+    override val preprocessors = context.plugin<DokkaBase>().query { htmlPreprocessors }
 
     override fun FlowContent.wrapGroup(
         node: ContentGroup,
         pageContext: ContentPage,
         childrenCallback: FlowContent.() -> Unit
-    ) = when {
-        node.style.contains(TextStyle.Paragraph) -> p { childrenCallback() }
-        node.style.contains(TextStyle.Block) -> div { childrenCallback() }
-        else -> childrenCallback()
+    ) {
+        val additionalClasses = node.style.joinToString(" ") { it.toString().toLowerCase() }
+        return when {
+            node.dci.kind == ContentKind.Symbol -> div("symbol $additionalClasses") { childrenCallback() }
+            node.dci.kind == ContentKind.BriefComment -> div("brief $additionalClasses") { childrenCallback() }
+            node.style.contains(TextStyle.Paragraph) -> p(additionalClasses) { childrenCallback() }
+            node.style.contains(TextStyle.Block) -> div(additionalClasses) { childrenCallback() }
+            else -> childrenCallback()
+        }
     }
 
     override fun FlowContent.buildPlatformDependent(content: PlatformHintedContent, pageContext: ContentPage) {
@@ -44,7 +46,7 @@ open class HtmlRenderer(
             consumer.onTagContentUnsafe { +distinct.keys.single() }
         else
             distinct.forEach { text, platforms ->
-                consumer.onTagContentUnsafe { +platforms.joinToString(prefix = "$text [", postfix = "]") { it.name } }
+                consumer.onTagContentUnsafe { +platforms.joinToString(prefix = " [", postfix = "] $text") { it.name } }
             }
     }
 
@@ -172,10 +174,16 @@ open class HtmlRenderer(
         language: String,
         pageContext: ContentPage
     ) {
-        buildNewLine()
-        code.forEach {
-            +((it as? ContentText)?.text ?: run { context.logger.error("Cannot cast $it as ContentText!"); "" })
-            buildNewLine()
+        span(classes = "code") {
+            val iterator = code.iterator()
+            while (iterator.hasNext()) {
+                val element = iterator.next()
+                +((element as? ContentText)?.text
+                    ?: run { context.logger.error("Cannot cast $element as ContentText!"); "" })
+                if (iterator.hasNext()) {
+                    buildNewLine()
+                }
+            }
         }
     }
 
@@ -191,6 +199,9 @@ open class HtmlRenderer(
     }
 
     override fun FlowContent.buildText(textNode: ContentText) {
+        when{
+            textNode.style.contains(TextStyle.Indented) -> consumer.onTagContentEntity(Entities.nbsp)
+        }
         text(textNode.text)
     }
 
@@ -202,11 +213,18 @@ open class HtmlRenderer(
     private fun PageNode.root(path: String) = locationProvider.resolveRoot(this) + path
 
     override fun buildPage(page: ContentPage, content: (FlowContent, ContentPage) -> Unit): String =
-        buildHtml(page, page.embeddedResources) { content(this, page) }
+        buildHtml(page, page.embeddedResources) {
+            div {
+                id = "content"
+                attributes["pageIds"] = page.dri.first().toString()
+                content(this, page)
+            }
+        }
 
     open fun buildHtml(page: PageNode, resources: List<String>, content: FlowContent.() -> Unit) =
         createHTML().html {
             head {
+                meta(name = "viewport", content = "width=device-width, initial-scale=1")
                 title(page.name)
                 with(resources) {
                     filter { it.substringBefore('?').substringAfterLast('.') == "css" }
@@ -218,22 +236,28 @@ open class HtmlRenderer(
             }
             body {
                 div {
-                    id = "navigation"
+                    id = "container"
                     div {
-                        id = "searchBar"
-                        form(action = page.root("-search.html"), method = FormMethod.get) {
-                            id = "searchForm"
-                            input(type = InputType.search, name = "query")
-                            input(type = InputType.submit) { value = "Search" }
+                        id = "leftColumn"
+                        div {
+                            id = "logo"
+                        }
+                        div {
+                            id = "sideMenu"
                         }
                     }
                     div {
-                        id = "sideMenu"
+                        id = "main"
+                        div {
+                            id = "searchBar"
+                            form(action = page.root("-search.html"), method = FormMethod.get) {
+                                id = "searchForm"
+                                input(type = InputType.search, name = "query")
+                                input(type = InputType.submit) { value = "Search" }
+                            }
+                        }
+                        content()
                     }
-                }
-                div {
-                    id = "content"
-                    content()
                 }
             }
         }
@@ -245,7 +269,7 @@ private fun PageNode.pageKind() = when (this) {
     is PackagePageNode -> "package"
     is ClasslikePageNode -> "class"
     is MemberPageNode -> when (this.documentable) {
-        is Function -> "function"
+        is DFunction -> "function"
         else -> "other"
     }
     else -> "other"

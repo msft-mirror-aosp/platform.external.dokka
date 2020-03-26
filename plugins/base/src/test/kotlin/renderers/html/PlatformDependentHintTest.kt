@@ -3,13 +3,14 @@ package renderers.html
 import org.jetbrains.dokka.Platform
 import org.jetbrains.dokka.base.renderers.html.HtmlRenderer
 import org.jetbrains.dokka.pages.PlatformData
-import org.jetbrains.dokka.pages.Style
 import org.jetbrains.dokka.pages.TextStyle
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import renderers.Div
 import renderers.RenderingOnlyTestBase
 import renderers.TestPage
+import renderers.match
 
-class PlatformDependentHintTest: RenderingOnlyTestBase() {
+class PlatformDependentHintTest : RenderingOnlyTestBase() {
     private val pl1 = PlatformData("pl1", Platform.js, listOf("pl1"))
     private val pl2 = PlatformData("pl2", Platform.jvm, listOf("pl2"))
     private val pl3 = PlatformData("pl3", Platform.native, listOf("pl3"))
@@ -25,7 +26,7 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div>abc</div></div>"))
+        renderedContent.match(Div("abc"))
     }
 
     @Test
@@ -39,7 +40,7 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div>a</div> [pl1]<div>b</div> [pl2]<div>c</div> [pl3]</div>"))
+        renderedContent.match("[pl1]", Div("a"), "[pl2]",  Div("b"), "[pl3]", Div("c"))
     }
 
     @Test
@@ -53,7 +54,7 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div>ab</div> [pl1]<div>bc</div> [pl2]</div>"))
+        renderedContent.match("[pl1]", Div("ab"), "[pl2]", Div("bc"))
     }
 
     @Test
@@ -67,7 +68,7 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div>ab</div></div>"))
+        renderedContent.match(Div("ab"))
     }
 
     @Test
@@ -83,13 +84,13 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div><div>ab</div></div> [pl1]<div><div>a</div>b</div> [pl2]</div>"))
+        renderedContent.match("[pl1]", Div(Div("ab")), "[pl2]", Div(Div("a"), "b"))
     }
 
     @Test
     fun caseWithGroupNotBreakingSimplification() {
         val page = TestPage {
-            platformDependentHint(platformData = setOf(pl1, pl2), styles = setOf(TextStyle.Block)) {
+            platformDependentHint(platformData = setOf(pl1, pl2)) {
                 group {
                     text("a", platformData = setOf(pl1, pl2))
                     text("b", platformData = setOf(pl1))
@@ -99,7 +100,8 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div>ab</div></div>"))
+        println(renderedContent)
+        renderedContent.match("ab")
     }
 
     @Test
@@ -113,6 +115,6 @@ class PlatformDependentHintTest: RenderingOnlyTestBase() {
         }
 
         HtmlRenderer(context).render(page)
-        assert(linesAfterContentTag().contains("<div>a</div> [pl1, pl2]<div>b</div> [pl3]</div>"))
+        renderedContent.match("[pl1, pl2]", Div("a"), "[pl3]",  Div("b"))
     }
 }

@@ -1,11 +1,14 @@
 package model
 
+import org.jetbrains.dokka.Platform
 import org.jetbrains.dokka.model.*
 import org.jetbrains.dokka.model.KotlinModifier.*
-import org.jetbrains.dokka.model.Function
-import org.junit.Test
+import org.jetbrains.dokka.pages.PlatformData
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import utils.AbstractModelTest
 import utils.assertNotNull
+import utils.name
 import utils.supers
 
 
@@ -17,7 +20,7 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
             """
             |class Klass {}"""
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
                 children counts 4
             }
@@ -31,7 +34,7 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
             |object Obj {}
             """
         ) {
-            with((this / "classes" / "Obj").cast<Object>()) {
+            with((this / "classes" / "Obj").cast<DObject>()) {
                 name equals "Obj"
                 children counts 3
             }
@@ -45,7 +48,7 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
             |class Klass(name: String)
         """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
                 children counts 4
 
@@ -54,7 +57,7 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                     parameters counts 1
                     with(parameters.firstOrNull().assertNotNull("Constructor parameter")) {
                         name equals "name"
-                        type.constructorFqName equals "kotlin.String"
+                        type.name equals "String"
                     }
                 }
 
@@ -71,12 +74,12 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
             |}
             """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
                 children counts 5
 
-                with((this / "fn").cast<Function>()) {
-                    type.constructorFqName equals "kotlin.Unit"
+                with((this / "fn").cast<DFunction>()) {
+                    type.name equals "Unit"
                     parameters counts 0
                     visibility.values allEquals KotlinVisibility.Public
                 }
@@ -93,11 +96,11 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
             |}
             """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
                 children counts 5
 
-                with((this / "name").cast<Property>()) {
+                with((this / "name").cast<DProperty>()) {
                     name equals "name"
                     // TODO property name
                 }
@@ -117,22 +120,22 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
             |}
             """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
                 children counts 5
 
-                with((this / "Companion").cast<Object>()) {
+                with((this / "Companion").cast<DObject>()) {
                     name equals "Companion"
                     children counts 5
 
-                    with((this / "x").cast<Property>()) {
+                    with((this / "x").cast<DProperty>()) {
                         name equals "x"
                     }
 
-                    with((this / "foo").cast<Function>()) {
+                    with((this / "foo").cast<DFunction>()) {
                         name equals "foo"
                         parameters counts 0
-                        type.constructorFqName equals "kotlin.Unit"
+                        type.name equals "Unit"
                     }
                 }
             }
@@ -146,22 +149,16 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |data class Klass() {}
                 """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
                 visibility.values allEquals KotlinVisibility.Public
-                with(extra[AdditionalModifiers.AdditionalKey].assertNotNull("Extras")) {
-                    content.find{it == ExtraModifiers.DATA}.assertNotNull("data modifier")
+                with(extra[AdditionalModifiers].assertNotNull("Extras")) {
+                    content counts 1
+                    content.first() equals ExtraModifiers.DATA
                 }
             }
         }
     }
-
-//    @Test fun dataClass() {
-//        verifyPackageMember("testdata/classes/dataClass.kt", defaultModelConfig) { cls ->
-//            val modifiers = cls.details(NodeKind.Modifier).map { it.name }
-//            assertTrue("data" in modifiers)
-//        }
-//    }
 
     @Test
     fun sealedClass() {
@@ -170,37 +167,32 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |sealed class Klass() {}
                 """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
-                modifier equals KotlinModifier.Sealed
+                modifier.allValues.forEach { it equals Sealed }
             }
         }
     }
 
-//                // TODO modifiers
-//    @Test fun annotatedClassWithAnnotationParameters() {
-//        checkSourceExistsAndVerifyModel(
-//            "testdata/classes/annotatedClassWithAnnotationParameters.kt",
-//            defaultModelConfig
-//        ) { model ->
-//            with(model.members.single().members.single()) {
-//                with(deprecation!!) {
-//                    assertEquals("Deprecated", name)
-//                    assertEquals(Content.Empty, content)
-//                    assertEquals(NodeKind.Annotation, kind)
-//                    assertEquals(1, details.count())
-//                    with(details[0]) {
-//                        assertEquals(NodeKind.Parameter, kind)
-//                        assertEquals(1, details.count())
-//                        with(details[0]) {
-//                            assertEquals(NodeKind.Value, kind)
-//                            assertEquals("\"should no longer be used\"", name)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
+    @Test
+    fun annotatedClassWithAnnotationParameters() {
+        inlineModelTest(
+            """
+                |@Deprecated("should no longer be used") class Foo() {}
+                """
+        ) {
+            with((this / "classes" / "Foo").cast<DClass>()) {
+                with(extra[Annotations].assertNotNull("Annotations")) {
+                    this.content counts 1
+                    with(content.first()) {
+                        dri.classNames equals "Deprecated"
+                        params.entries counts 1
+                        params["message"].assertNotNull("message") equals "should no longer be used"
+                    }
+                }
+            }
+        }
+    }
 
     @Test
     fun notOpenClass() {
@@ -215,19 +207,19 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |}
                 """
         ) {
-            val C = (this / "classes" / "C").cast<Class>()
-            val D = (this / "classes" / "D").cast<Class>()
+            val C = (this / "classes" / "C").cast<DClass>()
+            val D = (this / "classes" / "D").cast<DClass>()
 
             with(C) {
-                modifier equals Open
-                with((this / "f").cast<Function>()) {
-                    modifier equals Open
+                modifier.allValues.forEach { it equals Open }
+                with((this / "f").cast<DFunction>()) {
+                    modifier.allValues.forEach { it equals Open }
                 }
             }
             with(D) {
-                modifier equals Final
-                with((this / "f").cast<Function>()) {
-                    modifier equals Open
+                modifier.allValues.forEach { it equals Final }
+                with((this / "f").cast<DFunction>()) {
+                    modifier.allValues.forEach { it equals Open }
                 }
                 D.supertypes.flatMap { it.component2() }.firstOrNull() equals C.dri
             }
@@ -249,21 +241,21 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |}
                 """
         ) {
-            val C = (this / "classes" / "C").cast<Class>()
-            val D = (this / "classes" / "D").cast<Class>()
-            val E = (this / "classes" / "E").cast<Class>()
+            val C = (this / "classes" / "C").cast<DClass>()
+            val D = (this / "classes" / "D").cast<DClass>()
+            val E = (this / "classes" / "E").cast<DClass>()
 
             with(C) {
-                modifier equals Abstract
-                ((this / "foo").cast<Function>()).modifier equals Abstract
+                modifier.allValues.forEach { it equals Abstract }
+                ((this / "foo").cast<DFunction>()).modifier.allValues.forEach { it equals Abstract }
             }
 
             with(D) {
-                modifier equals Abstract
+                modifier.allValues.forEach { it equals Abstract }
             }
 
             with(E) {
-                modifier equals Final
+                modifier.allValues.forEach { it equals Final }
 
             }
             D.supers.firstOrNull() equals C.dri
@@ -271,7 +263,7 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
         }
     }
 
-    @Test // todo inner class
+    @Test
     fun innerClass() {
         inlineModelTest(
             """
@@ -280,23 +272,17 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |}
                 """
         ) {
-            with((this / "classes" / "C").cast<Class>()) {
+            with((this / "classes" / "C").cast<DClass>()) {
 
-                with((this / "D").cast<Class>()) {
+                with((this / "D").cast<DClass>()) {
+                    with(extra[AdditionalModifiers].assertNotNull("AdditionalModifiers")) {
+                        content counts 1
+                        content.first() equals ExtraModifiers.INNER
+                    }
                 }
             }
         }
     }
-
-//                // TODO modifiers
-//    @Test fun innerClass() {
-//        verifyPackageMember("testdata/classes/innerClass.kt", defaultModelConfig) { cls ->
-//            val innerClass = cls.members.single { it.name == "D" }
-//            val modifiers = innerClass.details(NodeKind.Modifier)
-//            assertEquals(3, modifiers.size)
-//            assertEquals("inner", modifiers[2].name)
-//        }
-//    }
 
     @Test
     fun companionObjectExtension() {
@@ -312,10 +298,10 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |val Klass.Default.x: Int get() = 1
                 """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
 
-                with((this / "Default").cast<Object>()) {
+                with((this / "Default").cast<DObject>()) {
                     name equals "Default"
                     // TODO extensions
                 }
@@ -342,7 +328,7 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |}
                 """
         ) {
-            with((this / "classes" / "C").cast<Class>()) {
+            with((this / "classes" / "C").cast<DClass>()) {
                 name equals "C"
                 constructors counts 2
 
@@ -356,21 +342,36 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                     parameters counts 1
                     with(parameters.firstOrNull() notNull "Constructor parameter") {
                         name equals "s"
-                        type.constructorFqName equals "kotlin.String"
+                        type.name equals "String"
                     }
                 }
             }
         }
     }
 
-    // TODO modifiers
-//    @Test fun sinceKotlin() {
-//        checkSourceExistsAndVerifyModel("testdata/classes/sinceKotlin.kt", defaultModelConfig) { model ->
-//            with(model.members.single().members.single()) {
-//                assertEquals("1.1", sinceKotlin)
-//            }
-//        }
-//    }
+    @Test
+    fun sinceKotlin() {
+        inlineModelTest(
+            """
+                |/**
+                | * Useful
+                | */
+                |@SinceKotlin("1.1")
+                |class C
+                """
+        ) {
+            with((this / "classes" / "C").cast<DClass>()) {
+                with(extra[Annotations].assertNotNull("Annotations")) {
+                    this.content counts 1
+                    with(content.first()) {
+                        dri.classNames equals "SinceKotlin"
+                        params.entries counts 1
+                        params["version"].assertNotNull("version") equals "1.1"
+                    }
+                }
+            }
+        }
+    }
 
     @Test
     fun privateCompanionObject() {
@@ -384,14 +385,32 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
                 |}
                 """
         ) {
-            with((this / "classes" / "Klass").cast<Class>()) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
                 name equals "Klass"
+                assertNull(companion, "Companion should not be visible by default")
+            }
+        }
+    }
 
-                with((this / "Companion").cast<Object>()) {
+    @Test
+    fun companionObject() {
+        inlineModelTest(
+            """
+                |class Klass {
+                |    companion object {
+                |        fun fn() {}
+                |        val a = 0
+                |    }
+                |}
+                """
+        ) {
+            with((this / "classes" / "Klass").cast<DClass>()) {
+                name equals "Klass"
+                with((this / "Companion").cast<DObject>()) {
                     name equals "Companion"
-                    visibility.values allEquals KotlinVisibility.Private
+                    visibility.values allEquals KotlinVisibility.Public
 
-                    with((this / "fn").cast<Function>()) {
+                    with((this / "fn").cast<DFunction>()) {
                         name equals "fn"
                         parameters counts 0
                         receiver equals null
@@ -401,48 +420,45 @@ class ClassesTest : AbstractModelTest("/src/main/kotlin/classes/Test.kt", "class
         }
     }
 
-    // TODO annotations
-//    @Test
-//    fun annotatedClass() {
-//        verifyPackageMember("testdata/classes/annotatedClass.kt", ModelConfig(
-//            analysisPlatform = analysisPlatform,
-//            withKotlinRuntime = true
-//        )
-//        ) { cls ->
-//            Assert.assertEquals(1, cls.annotations.count())
-//            with(cls.annotations[0]) {
-//                Assert.assertEquals("Strictfp", name)
-//                Assert.assertEquals(Content.Empty, content)
-//                Assert.assertEquals(NodeKind.Annotation, kind)
-//            }
-//        }
-//    }
+    @Test
+    fun annotatedClass() {
+        inlineModelTest(
+            """@Suppress("abc") class Foo() {}"""
+        ) {
+            with((this / "classes" / "Foo").cast<DClass>()) {
+                with(extra[Annotations]?.content?.firstOrNull().assertNotNull("annotations")) {
+                    dri.toString() equals "kotlin/Suppress////"
+                    with(params["names"].assertNotNull("param")) {
+                        this equals "[\"abc\"]"
+                    }
+                }
+            }
+        }
+    }
 
-
-// TODO annotations
-
-//    @Test fun javaAnnotationClass() {
-//        checkSourceExistsAndVerifyModel(
-//            "testdata/classes/javaAnnotationClass.kt",
-//            modelConfig = ModelConfig(analysisPlatform = analysisPlatform, withJdk = true)
-//        ) { model ->
-//            with(model.members.single().members.single()) {
-//                Assert.assertEquals(1, annotations.count())
-//                with(annotations[0]) {
-//                    Assert.assertEquals("Retention", name)
-//                    Assert.assertEquals(Content.Empty, content)
-//                    Assert.assertEquals(NodeKind.Annotation, kind)
-//                    with(details[0]) {
-//                        Assert.assertEquals(NodeKind.Parameter, kind)
-//                        Assert.assertEquals(1, details.count())
-//                        with(details[0]) {
-//                            Assert.assertEquals(NodeKind.Value, kind)
-//                            Assert.assertEquals("RetentionPolicy.SOURCE", name)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-
+    @Test fun javaAnnotationClass() {
+        inlineModelTest(
+            """
+                |import java.lang.annotation.Retention
+                |import java.lang.annotation.RetentionPolicy
+                |
+                |@Retention(RetentionPolicy.SOURCE)
+                |public annotation class throws()
+            """
+        ) {
+            with((this / "classes" / "throws").cast<DAnnotation>()) {
+                with(extra[AdditionalModifiers].assertNotNull("AdditionalModifiers")) {
+                    content counts 1
+                    content.first() equals ExtraModifiers.OVERRIDE // ??
+                }
+                with(extra[Annotations].assertNotNull("Annotations")) {
+                    content counts 1
+                    with(content.first()) {
+                        dri.classNames equals "Retention"
+                        params["value"].assertNotNull("value") equals "(java/lang/annotation/RetentionPolicy, SOURCE)"
+                    }
+                }
+            }
+        }
+    }
 }

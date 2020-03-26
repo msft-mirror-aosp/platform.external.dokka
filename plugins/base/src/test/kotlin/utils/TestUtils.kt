@@ -1,13 +1,10 @@
 package utils
 
-import org.jetbrains.dokka.model.Class
-import org.jetbrains.dokka.model.Documentable
-import org.jetbrains.dokka.model.Function
-import org.jetbrains.dokka.model.Property
+import org.jetbrains.dokka.model.*
 import org.jetbrains.dokka.model.doc.*
 import org.jetbrains.dokka.testApi.testRunner.AbstractCoreTest
-import kotlin.reflect.KClass
-import kotlin.reflect.full.safeCast
+import org.junit.jupiter.api.Assertions.assertTrue
+import kotlin.collections.orEmpty
 
 @DslMarker
 annotation class TestDSL
@@ -26,6 +23,10 @@ interface AssertDSL {
     infix fun Any?.equals(other: Any?) = this.assertEqual(other)
     infix fun Collection<Any>?.allEquals(other: Any?) =
         this?.also { c -> c.forEach { it equals other } } ?: run { assert(false) { "Collection is empty" } }
+    infix fun <T> Collection<T>?.exists(e: T) {
+        assertTrue(this.orEmpty().isNotEmpty(), "Collection cannot be null or empty")
+        assertTrue(this!!.any{it == e}, "Collection doesn't contain $e")
+    }
 
     infix fun <T> Collection<T>?.counts(n: Int) = this.orEmpty().assertCount(n)
 
@@ -64,5 +65,15 @@ fun <T> T?.assertNotNull(name: String = ""): T = this ?: throw AssertionError("$
 
 fun <T : Documentable> T?.docs() = this?.documentation.orEmpty().values.flatMap { it.children }
 
-val Class.supers
-    get() = supertypes.flatMap{it.component2()}
+val DClass.supers
+    get() = supertypes.flatMap { it.component2() }
+
+val Bound.name: String?
+    get() = when (this) {
+        is Nullable -> inner.name
+        is OtherParameter -> name
+        is PrimitiveJavaType -> name
+        is TypeConstructor -> dri.classNames
+        is JavaObject -> "Object"
+        is Void -> "void"
+    }

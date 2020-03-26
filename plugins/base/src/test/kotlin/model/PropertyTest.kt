@@ -1,11 +1,10 @@
 package model
 
-import org.jetbrains.dokka.model.KotlinVisibility
-import org.jetbrains.dokka.model.Package
-import org.jetbrains.dokka.model.Property
-import org.junit.Test
+import org.jetbrains.dokka.model.*
+import org.junit.jupiter.api.Test
 import utils.AbstractModelTest
 import utils.assertNotNull
+import utils.name
 
 class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "property") {
 
@@ -15,13 +14,13 @@ class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "pro
             """
             |val property = "test""""
         ) {
-            with((this / "property" / "property").cast<Property>()) {
+            with((this / "property" / "property").cast<DProperty>()) {
                 name equals "property"
                 children counts 0
                 with(getter.assertNotNull("Getter")) {
-                    type.constructorFqName equals "kotlin.String"
+                    type.name equals "String"
                 }
-                 type.constructorFqName equals "kotlin.String"
+                 type.name equals "String"
             }
         }
     }
@@ -33,14 +32,14 @@ class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "pro
             |var property = "test"
             """
         ) {
-            with((this / "property" / "property").cast<Property>()) {
+            with((this / "property" / "property").cast<DProperty>()) {
                 name equals "property"
                 children counts 0
                 setter.assertNotNull("Setter")
                 with(getter.assertNotNull("Getter")) {
-                    type.constructorFqName equals "kotlin.String"
+                    type.name equals "String"
                 }
-                 type.constructorFqName equals "kotlin.String"
+                 type.name equals "String"
             }
         }
     }
@@ -53,13 +52,13 @@ class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "pro
             |    get() = "test"
             """
         ) {
-            with((this / "property" / "property").cast<Property>()) {
+            with((this / "property" / "property").cast<DProperty>()) {
                 name equals "property"
                 children counts 0
                 with(getter.assertNotNull("Getter")) {
-                    type.constructorFqName equals "kotlin.String"
+                    type.name equals "String"
                 }
-                 type.constructorFqName equals "kotlin.String"
+                 type.name equals "String"
             }
         }
     }
@@ -73,12 +72,12 @@ class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "pro
             |    set(value) {}
             """
         ) {
-            with((this / "property" / "property").cast<Property>()) {
+            with((this / "property" / "property").cast<DProperty>()) {
                 name equals "property"
                 children counts 0
                 setter.assertNotNull("Setter")
                 with(getter.assertNotNull("Getter")) {
-                    type.constructorFqName equals "kotlin.String"
+                    type.name equals "String"
                 }
                 visibility.values allEquals KotlinVisibility.Public
             }
@@ -93,15 +92,15 @@ class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "pro
             |    get() = size() * 2
             """
         ) {
-            with((this / "property" / "property").cast<Property>()) {
+            with((this / "property" / "property").cast<DProperty>()) {
                 name equals "property"
                 children counts 0
                 with(receiver.assertNotNull("property receiver")) {
                     name equals null
-                    type.constructorFqName equals "kotlin.String"
+                    type.name equals "String"
                 }
                 with(getter.assertNotNull("Getter")) {
-                    type.constructorFqName equals "kotlin.Int"
+                    type.name equals "Int"
                 }
                 visibility.values allEquals KotlinVisibility.Public
             }
@@ -120,38 +119,75 @@ class PropertyTest : AbstractModelTest("/src/main/kotlin/property/Test.kt", "pro
             |}
             """
         ) {
-            with((this / "property").cast<Package>()) {
-                with((this / "Foo" / "property").cast<Property>()) {
+            with((this / "property").cast<DPackage>()) {
+                with((this / "Foo" / "property").cast<DProperty>()) {
                     name equals "property"
                     children counts 0
                     with(getter.assertNotNull("Getter")) {
-                        type.constructorFqName equals "kotlin.Int"
+                        type.name equals "Int"
                     }
                 }
-                with((this / "Bar" / "property").cast<Property>()) {
+                with((this / "Bar" / "property").cast<DProperty>()) {
                     name equals "property"
                     children counts 0
                     with(getter.assertNotNull("Getter")) {
-                        type.constructorFqName equals "kotlin.Int"
+                        type.name equals "Int"
                     }
                 }
             }
         }
     }
 
-    // todo
-//    @Test fun sinceKotlin() {
-//        checkSourceExistsAndVerifyModel("testdata/properties/sinceKotlin.kt", defaultModelConfig) { model ->
-//            with(model.members.single().members.single()) {
-//                assertEquals("1.1", sinceKotlin)
-//            }
-//        }
-//    }
-//}
-//
-//class JSPropertyTest: BasePropertyTest(Platform.js) {}
-//
-//class JVMPropertyTest : BasePropertyTest(Platform.jvm) {
+    @Test
+    fun sinceKotlin() {
+        inlineModelTest(
+            """
+                |/**
+                | * Quite useful [String]
+                | */
+                |@SinceKotlin("1.1")
+                |val prop: String = "1.1 rulezz"
+                """
+        ) {
+            with((this / "property" / "prop").cast<DProperty>()) {
+                with(extra[Annotations].assertNotNull("Annotations")) {
+                    this.content counts 1
+                    with(content.first()) {
+                        dri.classNames equals "SinceKotlin"
+                        params.entries counts 1
+                        params["version"].assertNotNull("version") equals "1.1"
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun annotatedProperty() {
+        inlineModelTest(
+            """
+                |@Strictfp var property = "test"
+                """,
+            configuration = dokkaConfiguration {
+                passes {
+                    pass {
+                        sourceRoots = listOf("src/")
+                        classpath = listOfNotNull(jvmStdlibPath)
+                    }
+                }
+            }
+        ) {
+            with((this / "property" / "property").cast<DProperty>()) {
+                with(extra[Annotations].assertNotNull("Annotations")) {
+                    this.content counts 1
+                    with(content.first()) {
+                        dri.classNames equals "Strictfp"
+                        params.entries counts 0
+                    }
+                }
+            }
+        }
+    }
 //    @Test
 //    fun annotatedProperty() {
 //        checkSourceExistsAndVerifyModel(

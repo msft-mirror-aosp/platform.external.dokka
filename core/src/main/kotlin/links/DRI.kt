@@ -56,6 +56,9 @@ data class DRI(
     }
 }
 
+val DriOfUnit = DRI("kotlin", "Unit")
+val DriOfAny = DRI("kotlin", "Any")
+
 fun DRI.withClass(name: String) = copy(classNames = if (classNames.isNullOrBlank()) name else "$classNames.$name")
 
 val DRI.parent: DRI
@@ -109,6 +112,8 @@ sealed class TypeReference {
         fun from(d: ValueParameterDescriptor): TypeReference? =
             fromPossiblyNullable(d.type)
 
+        fun from(p: PsiClass) = TypeReference
+
         private fun fromPossiblyNullable(t: KotlinType, self: KotlinType? = null): TypeReference =
             from(t, self).let { if (t.isMarkedNullable) Nullable(it) else it }
 
@@ -124,7 +129,6 @@ sealed class TypeReference {
                     t.arguments.map { fromProjection(it, self) }
                 )
             }
-
 
         private fun fromProjection(t: TypeProjection, r: KotlinType? = null): TypeReference =
             if (t.isStarProjection) {

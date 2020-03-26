@@ -1,8 +1,8 @@
 package utils
 
-import org.jetbrains.dokka.model.Module
-import org.jetbrains.dokka.model.doc.DocumentationNode
-import org.jetbrains.dokka.testApi.testRunner.AbstractCoreTest
+import org.jetbrains.dokka.DokkaConfigurationImpl
+import org.jetbrains.dokka.model.DModule
+import org.jetbrains.dokka.plugability.DokkaPlugin
 
 abstract class AbstractModelTest(val path: String? = null, val pkg: String) : ModelDSL(), AssertDSL {
 
@@ -11,9 +11,12 @@ abstract class AbstractModelTest(val path: String? = null, val pkg: String) : Mo
         platform: String = "jvm",
         targetList: List<String> = listOf("jvm"),
         prependPackage: Boolean = true,
-        block: Module.() -> Unit
+        cleanupOutput: Boolean = true,
+        pluginsOverrides: List<DokkaPlugin> = emptyList(),
+        configuration: DokkaConfigurationImpl? = null,
+        block: DModule.() -> Unit
     ) {
-        val configuration = dokkaConfiguration {
+        val testConfiguration = configuration ?: dokkaConfiguration {
             passes {
                 pass {
                     sourceRoots = listOf("src/")
@@ -22,12 +25,15 @@ abstract class AbstractModelTest(val path: String? = null, val pkg: String) : Mo
                 }
             }
         }
-        val prepend = path.let { p -> p?.let { "|$it\n" } ?: "" } + if(prependPackage) "|package $pkg" else ""
+        val prepend = path.let { p -> p?.let { "|$it\n" } ?: "" } + if (prependPackage) "|package $pkg" else ""
 
-        testInline(("$prepend\n$query").trim().trimIndent(), configuration) {
+        testInline(
+            query = ("$prepend\n$query").trim().trimIndent(),
+            configuration = testConfiguration,
+            cleanupOutput = cleanupOutput,
+            pluginOverrides = pluginsOverrides
+        ) {
             documentablesTransformationStage = block
         }
     }
-
-
 }

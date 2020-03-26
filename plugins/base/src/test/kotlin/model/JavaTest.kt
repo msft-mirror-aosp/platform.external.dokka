@@ -1,12 +1,12 @@
 package model
 
+import org.jetbrains.dokka.base.transformers.documentables.InheritorsInfo
 import org.jetbrains.dokka.model.*
-import org.jetbrains.dokka.model.Enum
-import org.jetbrains.dokka.model.Function
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import utils.AbstractModelTest
 import utils.assertNotNull
+import utils.name
 
 class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
 
@@ -24,10 +24,10 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Test").cast<Class>()) {
+            with((this / "java" / "Test").cast<DClass>()) {
                 name equals "Test"
                 children counts 1
-                with((this / "fn").cast<Function>()) {
+                with((this / "fn").cast<DFunction>()) {
                     name equals "fn"
                     this
                 }
@@ -82,7 +82,7 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Test" / "fn").cast<Function>()) {
+            with((this / "java" / "Test" / "fn").cast<DFunction>()) {
                 this
             }
         }
@@ -108,11 +108,11 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |public class Foo extends Exception implements Cloneable {}
             """
         ) {
-            with((this / "java" / "Foo").cast<Class>()) {
+            with((this / "java" / "Foo").cast<DClass>()) {
                 val sups = listOf("Exception", "Cloneable")
                 assertTrue(
-                    "Foo must extend ${sups.joinToString(", ")}",
                     sups.all { s -> supertypes.map.values.flatten().any { it.classNames == s } })
+                "Foo must extend ${sups.joinToString(", ")}"
             }
         }
     }
@@ -128,16 +128,16 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Test").cast<Class>()) {
+            with((this / "java" / "Test").cast<DClass>()) {
                 name equals "Test"
                 children counts 1
 
-                with((this / "arrayToString").cast<Function>()) {
+                with((this / "arrayToString").cast<DFunction>()) {
                     name equals "arrayToString"
-                    type.constructorFqName equals "java.lang.String[]"
+                    type.name equals "Array"
                     with(parameters.firstOrNull().assertNotNull("parameters")) {
                         name equals "data"
-                        type.constructorFqName equals "int[]"
+                        type.name equals "Array"
                     }
                 }
             }
@@ -153,8 +153,8 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Foo").cast<Class>()) {
-                this
+            with((this / "java" / "Foo").cast<DClass>()) {
+                generics counts 1
             }
         }
     }
@@ -189,14 +189,14 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Test").cast<Class>()) {
+            with((this / "java" / "Test").cast<DClass>()) {
                 name equals "Test"
 
                 constructors counts 2
                 constructors.find { it.parameters.isNullOrEmpty() }.assertNotNull("Test()")
 
                 with(constructors.find { it.parameters.isNotEmpty() }.assertNotNull("Test(String)")) {
-                    parameters.firstOrNull()?.type?.constructorFqName equals "java.lang.String"
+                    parameters.firstOrNull()?.type?.name equals "String"
                 }
             }
         }
@@ -211,9 +211,9 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "InnerClass").cast<Class>()) {
+            with((this / "java" / "InnerClass").cast<DClass>()) {
                 children counts 1
-                with((this / "D").cast<Class>()) {
+                with((this / "D").cast<DClass>()) {
                     name equals "D"
                     children counts 0
                 }
@@ -230,15 +230,15 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Foo").cast<Class>()) {
+            with((this / "java" / "Foo").cast<DClass>()) {
                 name equals "Foo"
                 children counts 1
 
-                with((this / "bar").cast<Function>()) {
+                with((this / "bar").cast<DFunction>()) {
                     name equals "bar"
                     with(parameters.firstOrNull().assertNotNull("parameter")) {
                         name equals "x"
-                        type.constructorFqName equals "java.lang.String..."
+                        type.name equals "Array"
                     }
                 }
             }
@@ -255,18 +255,17 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "Test").cast<Class>()) {
+            with((this / "java" / "Test").cast<DClass>()) {
                 children counts 2
 
-                with((this / "i").cast<Property>()) {
-                    getter.assertNotNull("i.get")
-                    setter.assertNotNull("i.set")
+                with((this / "i").cast<DProperty>()) {
+                    getter equals null
+                    setter equals null
                 }
 
-                with((this / "s").cast<Property>()) {
-                    getter.assertNotNull("s.get")
-                    setter.assertNotNull("s.set")
-
+                with((this / "s").cast<DProperty>()) {
+                    getter equals null
+                    setter equals null
                 }
             }
         }
@@ -284,6 +283,24 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
     //            assertTrue("static" in s.details(NodeKind.Modifier).map { it.name })
     //        }
     //    }
+
+    @Test
+    fun staticMethod() {
+        inlineModelTest(
+            """
+            |class C {
+            |  public static void foo() {}
+            |}
+            """
+        ) {
+            with((this / "java" / "C" / "foo").cast<DFunction>()) {
+                with(extra[AdditionalModifiers].assertNotNull("AdditionalModifiers")) {
+                    content counts 1
+                    content.first() equals ExtraModifiers.STATIC
+                }
+            }
+        }
+    }
 
     //    @Test fun staticMethod() { todo
     //        verifyJavaPackageMember("testdata/java/staticMethod.java", defaultModelConfig) { cls ->
@@ -303,31 +320,52 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
     //            assertEquals(1, cls.members(NodeKind.Function).size)
     //        }
     //    }
-    //
-    //    @Test fun annotatedAnnotation() {
-    //        verifyJavaPackageMember("testdata/java/annotatedAnnotation.java", defaultModelConfig) { cls ->
-    //            assertEquals(1, cls.annotations.size)
-    //            with(cls.annotations[0]) {
-    //                assertEquals(1, details.count())
-    //                with(details[0]) {
-    //                    assertEquals(NodeKind.Parameter, kind)
-    //                    assertEquals(1, details.count())
-    //                    with(details[0]) {
-    //                        assertEquals(NodeKind.Value, kind)
-    //                        assertEquals("[AnnotationTarget.FIELD, AnnotationTarget.CLASS, AnnotationTarget.FILE, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER]", name)
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //
+
+    @Test
+    fun annotatedAnnotation() {
+        inlineModelTest(
+            """
+            |import java.lang.annotation.*;
+            |
+            |@Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
+            |public @interface Attribute {
+            |  String value() default "";
+            |}
+            """
+        ) {
+            with((this / "java" / "Attribute").cast<DAnnotation>()) {
+                with(extra[Annotations].assertNotNull("Annotations")) {
+                    with(content.single()) {
+                        dri.classNames equals "Target"
+                        params["value"].assertNotNull("value") equals "{ElementType.FIELD, ElementType.TYPE, ElementType.METHOD}"
+                    }
+                }
+            }
+        }
+    }
+
     //    @Test fun deprecation() {
     //        verifyJavaPackageMember("testdata/java/deprecation.java", defaultModelConfig) { cls ->
     //            val fn = cls.members(NodeKind.Function).single()
     //            assertEquals("This should no longer be used", fn.deprecation!!.content.toTestString())
     //        }
     //    }
-    //
+
+    @Test
+    fun javaLangObject() {
+        inlineModelTest(
+            """
+            |class Test {
+            |  public Object fn() { return null; }
+            |}
+            """
+        ) {
+            with((this / "java" / "Test" / "fn").cast<DFunction>()) {
+                assertTrue(type is JavaObject)
+            }
+        }
+    }
+
     //    @Test fun javaLangObject() {
     //        verifyJavaPackageMember("testdata/java/javaLangObject.java", defaultModelConfig) { cls ->
     //            val fn = cls.members(NodeKind.Function).single()
@@ -344,17 +382,41 @@ class JavaTest : AbstractModelTest("/src/main/kotlin/java/Test.java", "java") {
             |}
             """
         ) {
-            with((this / "java" / "E").cast<Enum>()) {
+            with((this / "java" / "E").cast<DEnum>()) {
                 name equals "E"
                 entries counts 1
 
-                with((this / "Foo").cast<EnumEntry>()) {
+                with((this / "Foo").cast<DEnumEntry>()) {
                     name equals "Foo"
                 }
             }
         }
     }
 
+    @Test
+    fun inheritorLinks() {
+        inlineModelTest(
+            """
+            |public class InheritorLinks {
+            |  public static class Foo {}
+            |
+            |  public static class Bar extends Foo {}
+            |}
+            """
+        ) {
+            with((this / "java" / "InheritorLinks").cast<DClass>()) {
+                val dri = (this / "Bar").assertNotNull("Foo dri").dri
+                with((this / "Foo").cast<DClass>()) {
+                    with(extra[InheritorsInfo].assertNotNull("InheritorsInfo")) {
+                        with(value.map.values.flatten().distinct()) {
+                            this counts 1
+                            first() equals dri
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     //    todo
     //    @Test fun inheritorLinks() {

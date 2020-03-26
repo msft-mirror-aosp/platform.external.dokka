@@ -1,7 +1,7 @@
 package org.jetbrains.dokka.base.renderers
 
 import org.jetbrains.dokka.base.DokkaBase
-import org.jetbrains.dokka.base.resolvers.LocationProvider
+import org.jetbrains.dokka.base.resolvers.local.LocationProvider
 import org.jetbrains.dokka.pages.*
 import org.jetbrains.dokka.plugability.DokkaContext
 import org.jetbrains.dokka.plugability.plugin
@@ -81,6 +81,7 @@ abstract class DefaultRenderer<T>(
                 is ContentList -> buildList(node, pageContext, platformRestriction)
                 is ContentTable -> buildTable(node, pageContext, platformRestriction)
                 is ContentGroup -> buildGroup(node, pageContext, platformRestriction)
+                is ContentBreakLine -> buildNewLine()
                 is PlatformHintedContent -> buildPlatformDependent(node, pageContext)
                 else -> buildError(node)
             }

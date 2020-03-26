@@ -1,7 +1,8 @@
 package org.jetbrains.dokka.testApi.testRunner
 
+import com.intellij.openapi.application.PathManager
 import org.jetbrains.dokka.*
-import org.jetbrains.dokka.model.Module
+import org.jetbrains.dokka.model.DModule
 import org.jetbrains.dokka.pages.ModulePageNode
 import org.jetbrains.dokka.pages.PlatformData
 import org.jetbrains.dokka.pages.RootPageNode
@@ -63,8 +64,9 @@ abstract class AbstractCoreTest {
         val newConfiguration =
             configuration.copy(
                 outputDir = testDirPath.toAbsolutePath().toString(),
-                passesConfigurations = configuration.passesConfigurations
-                    .map { it.copy(sourceRoots = it.sourceRoots.map { it.copy(path = "${testDirPath.toAbsolutePath()}/${it.path}") }) }
+                passesConfigurations = configuration.passesConfigurations.map {
+                    it.copy(sourceRoots = it.sourceRoots.map { it.copy(path = "${testDirPath.toAbsolutePath()}/${it.path}") })
+                }
             )
         DokkaTestGenerator(
             newConfiguration,
@@ -104,9 +106,10 @@ abstract class AbstractCoreTest {
     protected class TestBuilder {
         var analysisSetupStage: (Map<PlatformData, EnvironmentAndFacade>) -> Unit = {}
         var pluginsSetupStage: (DokkaContext) -> Unit = {}
-        var documentablesCreationStage: (List<Module>) -> Unit = {}
-        var documentablesMergingStage: (Module) -> Unit = {}
-        var documentablesTransformationStage: (Module) -> Unit = {}
+        var documentablesCreationStage: (List<DModule>) -> Unit = {}
+        var documentablesFirstTransformationStep: (List<DModule>) -> Unit = {}
+        var documentablesMergingStage: (DModule) -> Unit = {}
+        var documentablesTransformationStage: (DModule) -> Unit = {}
         var pagesGenerationStage: (ModulePageNode) -> Unit = {}
         var pagesTransformationStage: (RootPageNode) -> Unit = {}
         var renderingStage: (RootPageNode, DokkaContext) -> Unit = { a, b -> }
@@ -115,6 +118,7 @@ abstract class AbstractCoreTest {
             analysisSetupStage,
             pluginsSetupStage,
             documentablesCreationStage,
+            documentablesFirstTransformationStep,
             documentablesMergingStage,
             documentablesTransformationStage,
             pagesGenerationStage,
@@ -137,7 +141,6 @@ abstract class AbstractCoreTest {
         var cacheRoot: String? = null
         var pluginsClasspath: List<File> = emptyList()
         private val passesConfigurations = mutableListOf<PassConfigurationImpl>()
-
         fun build() = DokkaConfigurationImpl(
             outputDir = outputDir,
             format = format,
@@ -211,14 +214,31 @@ abstract class AbstractCoreTest {
             sourceLinks = sourceLinks
         )
     }
+
+    protected val jvmStdlibPath: String? by lazy {
+        PathManager.getResourceRoot(Strictfp::class.java, "/kotlin/jvm/Strictfp.class")
+    }
+
+    protected val jsStdlibPath: String? by lazy {
+        PathManager.getResourceRoot(Any::class.java, "/kotlin/jquery")
+    }
+
+    protected val commonStdlibPath: String? by lazy {
+        // TODO: feels hacky, find a better way to do it
+        ClassLoader.getSystemResource("kotlin/UInt.kotlin_metadata")
+            ?.file
+            ?.replace("file:", "")
+            ?.replaceAfter(".jar", "")
+    }
 }
 
 data class TestMethods(
     val analysisSetupStage: (Map<PlatformData, EnvironmentAndFacade>) -> Unit,
     val pluginsSetupStage: (DokkaContext) -> Unit,
-    val documentablesCreationStage: (List<Module>) -> Unit,
-    val documentablesMergingStage: (Module) -> Unit,
-    val documentablesTransformationStage: (Module) -> Unit,
+    val documentablesCreationStage: (List<DModule>) -> Unit,
+    val documentablesFirstTransformationStep: (List<DModule>) -> Unit,
+    val documentablesMergingStage: (DModule) -> Unit,
+    val documentablesTransformationStage: (DModule) -> Unit,
     val pagesGenerationStage: (ModulePageNode) -> Unit,
     val pagesTransformationStage: (RootPageNode) -> Unit,
     val renderingStage: (RootPageNode, DokkaContext) -> Unit

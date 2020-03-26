@@ -1,9 +1,10 @@
 package issues
 
-import org.jetbrains.dokka.model.Class
-import org.jetbrains.dokka.model.Function
-import org.junit.Test
+import org.jetbrains.dokka.model.DClass
+import org.jetbrains.dokka.model.DFunction
+import org.junit.jupiter.api.Test
 import utils.AbstractModelTest
+import utils.name
 
 class IssuesTest : AbstractModelTest("/src/main/kotlin/issues/Test.kt", "issues") {
 
@@ -31,18 +32,23 @@ class IssuesTest : AbstractModelTest("/src/main/kotlin/issues/Test.kt", "issues"
             |
             |    fun doSomething(): String = "Hello"
             |}
-        """
+        """,
+            configuration = dokkaConfiguration {
+                passes {
+                    pass {
+                        sourceRoots = listOf("src/")
+                        classpath = listOfNotNull(jvmStdlibPath)
+                    }
+                }
+            }
         ) {
-            with((this / "issues" / "Test").cast<Class>()) {
-                // passes
-                (this / "working").cast<Function>().type.constructorFqName equals "kotlin.String"
-                (this / "doSomething").cast<Function>().type.constructorFqName equals "kotlin.String"
-
-                // fails
-                (this / "brokenGenerics").cast<Function>().type.constructorFqName equals "kotlin.collections.List"
-                (this / "brokenApply").cast<Function>().type.constructorFqName equals "issues.Test"
-                (this / "brokenRun").cast<Function>().type.constructorFqName equals "issues.Test"
-                (this / "brokenLet").cast<Function>().type.constructorFqName equals "issues.Test"
+            with((this / "issues" / "Test").cast<DClass>()) {
+                (this / "working").cast<DFunction>().type.name equals "String"
+                (this / "doSomething").cast<DFunction>().type.name equals "String"
+                (this / "brokenGenerics").cast<DFunction>().type.name equals "List"
+                (this / "brokenApply").cast<DFunction>().type.name equals "Test"
+                (this / "brokenRun").cast<DFunction>().type.name equals "Test"
+                (this / "brokenLet").cast<DFunction>().type.name equals "Test"
             }
         }
     }
