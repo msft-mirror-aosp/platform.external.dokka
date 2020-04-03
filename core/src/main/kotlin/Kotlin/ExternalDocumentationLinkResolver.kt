@@ -210,7 +210,7 @@ interface InboundExternalLinkResolutionService {
         override fun getPath(symbol: DeclarationDescriptor): String? {
             if (symbol is EnumEntrySyntheticClassDescriptor) {
                 return getPath(symbol.containingDeclaration)?.let { it + "#" + symbol.name.asString() }
-            } else if (symbol is JavaClassDescriptor) {
+            } else if (symbol is ClassDescriptor) {
                 return DescriptorUtils.getFqName(symbol).asString().replace(".", "/") + ".html"
             } else if (symbol is JavaCallableMemberDescriptor) {
                 val containingClass = symbol.containingDeclaration as? JavaClassDescriptor ?: return null
