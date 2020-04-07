@@ -176,11 +176,25 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                 }
                             }
                             ul(classes = "nolist") {
-                                sections.forEach {
-                                    li {
-                                        code {
-                                            metaMarkup(it.children)
+                                sections.filter {it.tag == "See Also"}.forEach {
+                                    it.children.forEach { child ->
+                                        if (child is ContentNodeLazyLink || child is ContentExternalLink) {
+                                            li {
+                                                code {
+                                                    contentNodeToMarkup(child) // Wrap bare links in listItems.
+                                                } // bare links come from the java-to-kotlin parser.
+                                            }
                                         }
+                                        else if (child is ContentUnorderedList) {
+                                            metaMarkup(child.children) // Already wrapped in listItems.
+                                        } // this is how we want things to look. No parser currently does this (yet).
+                                        else if (child is ContentParagraph) {
+                                            li{
+                                                code {
+                                                    metaMarkup (child.children) // Replace paragraphs with listItems.
+                                                } // paragraph-wrapped links come from the kotlin parser
+                                            }
+                                        } // NOTE: currently the java-to-java parser does not add See Also links!
                                     }
                                 }
                             }
