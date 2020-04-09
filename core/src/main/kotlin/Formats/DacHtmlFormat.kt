@@ -101,9 +101,33 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                 }
                                 sections.forEach {
                                     tr {
-                                        td {
-                                            colSpan = "2"
-                                            metaMarkup(it.children)
+                                        if (it.children.size > 0) {
+                                            td {
+                                                val firstChild = it.children.first()
+                                                if (firstChild is ContentBlock &&
+                                                    firstChild.children.size == 3 &&
+                                                    firstChild.children[0] is NodeRenderContent &&
+                                                    firstChild.children[1] is ContentSymbol &&
+                                                    firstChild.children[2] is ContentText) {
+                                                    // it.children is expected to have two items
+                                                    // First should have 3 children of its own:
+                                                    // - NodeRenderContent is the return type
+                                                    // - ContentSymbol - ":"
+                                                    // - ContentText - " "
+                                                    // We want to only use NodeRenderContent in a separate <td> and
+                                                    // <code> to get proper formatting in DAC.
+                                                    code {
+                                                        metaMarkup(listOf(firstChild.children[0]))
+                                                    }
+                                                } else {
+                                                    metaMarkup(listOf(firstChild))
+                                                }
+                                            }
+                                            td {
+                                                if (it.children.size > 1) {
+                                                    metaMarkup(it.children.subList(1, it.children.size))
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -152,11 +176,25 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                 }
                             }
                             ul(classes = "nolist") {
-                                sections.forEach {
-                                    li {
-                                        code {
-                                            metaMarkup(it.children)
+                                sections.filter {it.tag == "See Also"}.forEach {
+                                    it.children.forEach { child ->
+                                        if (child is ContentNodeLazyLink || child is ContentExternalLink) {
+                                            li {
+                                                code {
+                                                    contentNodeToMarkup(child) // Wrap bare links in listItems.
+                                                } // bare links come from the java-to-kotlin parser.
+                                            }
                                         }
+                                        else if (child is ContentUnorderedList) {
+                                            metaMarkup(child.children) // Already wrapped in listItems.
+                                        } // this is how we want things to look. No parser currently does this (yet).
+                                        else if (child is ContentParagraph) {
+                                            li{
+                                                code {
+                                                    metaMarkup (child.children) // Replace paragraphs with listItems.
+                                                } // paragraph-wrapped links come from the kotlin parser
+                                            }
+                                        } // NOTE: currently the java-to-java parser does not add See Also links!
                                     }
                                 }
                             }
