@@ -209,10 +209,20 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
         superTypes.filter { !ignoreSupertype(it) }.forEach {
             node.appendType(it, NodeKind.Supertype)
             val superClass = it.resolve()
-            if (superClass != null) {
+            // parentNode is the actual DocumentationNode of this class's supertype
+            // It is necessary to create documentation links back to the superclass from inherited methods
+            val parentNode = refGraph.lookup(it.typeSignature())
+            if (superClass != null && parentNode != null) {
                 link(superClass, node, RefKind.Inheritor)
+                // Explicitly add the methods of the superclass as nodes to this class
+                node.appendChildren(superClass.methods, RefKind.InheritedMember) {
+                    val child = build()
+                    child.addReferenceTo(parentNode, RefKind.Owner)
+                    return@appendChildren child
+                }
             }
         }
+
         var methodsAndConstructors = methods
 
         if (constructors.isEmpty()) {
