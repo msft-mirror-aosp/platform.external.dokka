@@ -136,7 +136,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             }
             ContentHardLineBreak -> br
 
-            is ContentParagraph -> p { contentNodesToMarkup(content.children, contextUri) }
+            is ContentParagraph -> p(classes = content.label) { contentNodesToMarkup(content.children, contextUri) }
 
             is NodeRenderContent -> renderedSignature(content.node, mode = content.mode)
             is ContentNodeLink -> {
@@ -884,7 +884,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         emphasis: Boolean = true): ContentNode? {
         val deprecated = node.deprecation
         deprecated?.let {
-            return ContentParagraph().apply {
+            return ContentParagraph("caution").apply {
                 if (prefix) {
                     append(ContentStrong().apply { text(
                         if (deprecated.content.children.size == 0) "Deprecated."
