@@ -206,13 +206,14 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
             else -> NodeKind.Class
         }
         val node = nodeForElement(this, kind)
-        superTypes.filter { !ignoreSupertype(it) }.forEach {
-            node.appendType(it, NodeKind.Supertype)
-            val superClass = it.resolve()
+        superTypes.filter { !ignoreSupertype(it) }.forEach { superType ->
+            node.appendType(superType, NodeKind.Supertype)
+            val superClass = superType.resolve()
             if (superClass != null) {
                 link(superClass, node, RefKind.Inheritor)
             }
         }
+
         var methodsAndConstructors = methods
 
         if (constructors.isEmpty()) {
