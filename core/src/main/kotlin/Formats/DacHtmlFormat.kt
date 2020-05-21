@@ -9,7 +9,6 @@ import org.jetbrains.dokka.Kotlin.ParameterInfoNode
 import org.jetbrains.dokka.Utilities.firstSentence
 import java.lang.Math.max
 import java.net.URI
-import java.util.Collections.emptyMap
 import kotlin.reflect.KClass
 
 /**
@@ -176,11 +175,25 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                 }
                             }
                             ul(classes = "nolist") {
-                                sections.forEach {
-                                    li {
-                                        code {
-                                            metaMarkup(it.children)
+                                sections.filter {it.tag == "See Also"}.forEach {
+                                    it.children.forEach { child ->
+                                        if (child is ContentNodeLazyLink || child is ContentExternalLink) {
+                                            li {
+                                                code {
+                                                    contentNodeToMarkup(child) // Wrap bare links in listItems.
+                                                } // bare links come from the java-to-kotlin parser.
+                                            }
                                         }
+                                        else if (child is ContentUnorderedList) {
+                                            metaMarkup(child.children) // Already wrapped in listItems.
+                                        } // this is how we want things to look. No parser currently does this (yet).
+                                        else if (child is ContentParagraph) {
+                                            li{
+                                                code {
+                                                    metaMarkup (child.children) // Replace paragraphs with listItems.
+                                                } // paragraph-wrapped links come from the kotlin parser
+                                            }
+                                        } // NOTE: currently the java-to-java parser does not add See Also links!
                                     }
                                 }
                             }
@@ -467,7 +480,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             id = summaryId
             tbody {
                 if (headerAsRow) {
-                    developerHeading(header, summaryId)
+                    developerHeading(header)
                 }
                 nodes.forEach { node ->
                     row(node)
@@ -905,25 +918,11 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
     }
 }
 
-fun TBODY.developerHeading(
-    header: String,
-    summaryId: String? = null
-) {
+fun TBODY.developerHeading(header: String) {
     tr {
         th {
             attributes["colSpan"] = "2"
-            dheading {
-                attributes["ds-is"] = "heading"
-                attributes["text"] = header
-                attributes["id"] = summaryId ?: header.replace("\\s".toRegex(), "-").toLowerCase()
-                attributes["level"] = "h3"
-                attributes["toc"] = ""
-                attributes["class"] = ""
-                h3 {
-                    attributes["is-upgraded"] = ""
-                    +header
-                }
-            }
+            +header
         }
     }
 }
@@ -947,8 +946,3 @@ class DacAsJavaFormatDescriptor : JavaLayoutHtmlFormatDescriptorBase(), DefaultA
     override val packageListServiceClass: KClass<out PackageListService> = JavaLayoutHtmlPackageListService::class
     override val outputBuilderFactoryClass: KClass<out JavaLayoutHtmlFormatOutputBuilderFactory> = DevsiteLayoutHtmlFormatOutputBuilderFactoryImpl::class
 }
-
-fun FlowOrPhrasingContent.dheading(block : DHEADING.() -> Unit = {}) : Unit = DHEADING(consumer).visit(block)
-
-class DHEADING(consumer: TagConsumer<*>) :
-    HTMLTag("devsite-heading", consumer, emptyMap(), inlineTag = false, emptyTag = false), HtmlBlockTag
