@@ -70,7 +70,7 @@ interface JavaLayoutHtmlUriProvider {
     }
 
     fun mainUriOrWarn(node: DocumentationNode): URI? = tryGetMainUri(node) ?: (null).also {
-        AssertionError("Not implemented mainUri for ${node.kind}").printStackTrace()
+        AssertionError("Not implemented mainUri for ${node.kind} (${node})").printStackTrace()
     }
 }
 
