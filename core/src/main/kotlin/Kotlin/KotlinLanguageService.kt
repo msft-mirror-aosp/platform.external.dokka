@@ -363,13 +363,12 @@ class KotlinLanguageService : CommonLanguageService() {
 
         symbol("(")
         val parameters = node.details(NodeKind.Parameter)
-        renderList(parameters) {
-            indentedSoftLineBreak()
+        renderHardWrappingList(parameters) {
             renderParameter(it, renderMode)
         }
         if (needReturnType(node)) {
-            if (parameters.isNotEmpty()) {
-                softLineBreak()
+            if (parameters.size > 1) {
+                hardLineBreak()
             }
             symbol(")")
             symbol(": ")
@@ -455,7 +454,7 @@ class KotlinLanguageService : CommonLanguageService() {
 
 fun DocumentationNode.qualifiedNameFromType(): String {
     return details.firstOrNull { it.kind == NodeKind.QualifiedName }?.name
-            ?: (links.firstOrNull() ?: hiddenLinks.firstOrNull())?.qualifiedName()
+            ?: (links.firstOrNull { it.kind != NodeKind.ExternalLink } ?: hiddenLinks.firstOrNull())?.qualifiedName()
             ?: name
 }
 
