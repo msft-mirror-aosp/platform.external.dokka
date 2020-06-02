@@ -51,7 +51,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
     protected fun FlowContent.contentNodesToMarkup(content: List<ContentNode>, contextUri: URI = uri): Unit =
         content.forEach { contentNodeToMarkup(it, contextUri) }
 
-    private fun FlowContent.contentNodeToMarkup(content: ContentNode, contextUri: URI) {
+    protected fun FlowContent.contentNodeToMarkup(content: ContentNode, contextUri: URI = uri) {
         when (content) {
             is ContentText -> +content.text
             is ContentSymbol -> span("symbol") { +content.text }
@@ -136,7 +136,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             }
             ContentHardLineBreak -> br
 
-            is ContentParagraph -> p { contentNodesToMarkup(content.children, contextUri) }
+            is ContentParagraph -> p(classes = content.label) { contentNodesToMarkup(content.children, contextUri) }
 
             is NodeRenderContent -> renderedSignature(content.node, mode = content.mode)
             is ContentNodeLink -> {
@@ -456,7 +456,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             return
         }
 
-        val targetLink = node.links.singleOrNull()
+        val targetLink = node.links.firstOrNull()
 
         if (targetLink?.kind == NodeKind.TypeParameter) {
             +node.name
@@ -884,7 +884,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         emphasis: Boolean = true): ContentNode? {
         val deprecated = node.deprecation
         deprecated?.let {
-            return ContentParagraph().apply {
+            return ContentParagraph("caution").apply {
                 if (prefix) {
                     append(ContentStrong().apply { text(
                         if (deprecated.content.children.size == 0) "Deprecated."
@@ -1106,8 +1106,8 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 filter { it.getClassExtensionReceiver() != null }
                     .groupBy {
                         val receiverType = it.getClassExtensionReceiver()!!
-                        receiverType.links(NodeKind.ExternalLink).firstOrNull()
-                                ?: receiverType.links.first { it.kind in NodeKind.classLike}
+                        receiverType.links.filter { it.kind != NodeKind.ExternalLink}.firstOrNull() ?:
+                            receiverType.links(NodeKind.ExternalLink).first()
                     }
 
             private fun List<DocumentationNode>.externalExtensions(kind: NodeKind) =
