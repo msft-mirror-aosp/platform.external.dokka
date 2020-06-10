@@ -1,30 +1,58 @@
 package org.jetbrains.dokka.tests.format
 
-import com.google.inject.Guice.createInjector
-import com.google.inject.Injector
-import com.google.inject.Module
-import com.google.inject.name.Names
-import org.jetbrains.dokka.*
 import org.jetbrains.dokka.Formats.DacAsJavaFormatDescriptor
 import org.jetbrains.dokka.Formats.DacFormatDescriptor
-import org.jetbrains.dokka.Formats.JavaLayoutHtmlFormatGenerator
-import org.jetbrains.dokka.Utilities.bind
-import org.jetbrains.dokka.tests.verifyJavaOutput
-import org.junit.Rule
+import org.jetbrains.dokka.Formats.JavaLayoutHtmlFormatDescriptorBase
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
-import java.net.URI
 
 class DacFormatTest: DacFormatTestCase() {
-    override val formatDescriptor = DacFormatDescriptor()
-    override val dokkaFormat = "dac"
+    val dacFormatDescriptor = DacFormatDescriptor()
+    val dacAsJavaFormatDescriptor = DacAsJavaFormatDescriptor()
+    val dacFormat = "dac"
+    val dacAsJavaFormat = "dac-as-java"
+
+    private fun verifyBothFormats(directory: String) {
+        verifyDirectory(directory, dacFormatDescriptor, dacFormat)
+        verifyDirectory(directory, dacAsJavaFormatDescriptor, dacAsJavaFormat)
+    }
 
     @Test fun javaSeeTag() {
-        verifyJavaHtmlNode("javaSeeTag")
+        verifyBothFormats("javaSeeTag")
     }
 
     @Test fun javaConstructor() {
-        verifyJavaHtmlNode("javaConstructor")
+        verifyBothFormats("javaConstructor")
+    }
+
+    @Test
+    fun javaSeeTagAsJava() {
+        verifyBothFormats("javaSeeTag")
+    }
+
+    @Test
+    fun javaConstructorAsJava() {
+        verifyBothFormats("javaConstructor")
+    }
+
+    @Test
+    fun javaDefaultConstructor() {
+        verifyBothFormats("javaDefaultConstructor")
+    }
+
+    @Test
+    fun javaInheritedMethods() {
+        verifyBothFormats("inheritedMethods")
+    }
+
+    @Test fun javaMethodVisibilities() {
+        verifyBothFormats("javaMethodVisibilities")
+    }
+
+    @Test fun javaClassLinks() {
+        verifyBothFormats("javaClassLinks")
+    }
+
+    @Test fun deprecation() {
+        verifyBothFormats("deprecation")
     }
 }
