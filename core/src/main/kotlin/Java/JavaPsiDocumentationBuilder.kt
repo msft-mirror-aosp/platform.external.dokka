@@ -119,8 +119,12 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
             if (modifierList != null) {
                 modifierList.annotations.filter { !ignoreAnnotation(it) }.forEach {
                     val annotation = it.build()
-                    node.append(annotation,
-                            if (it.qualifiedName == "java.lang.Deprecated") RefKind.Deprecation else RefKind.Annotation)
+                    if (it.qualifiedName == "java.lang.Deprecated" || it.qualifiedName == "kotlin.Deprecated") {
+                        node.append(annotation, RefKind.Deprecation)
+                        annotation.convertDeprecationDetailsToChildren()
+                    } else {
+                        node.append(annotation, RefKind.Annotation)
+                    }
                 }
             }
         }
