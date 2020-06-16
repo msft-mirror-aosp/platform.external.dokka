@@ -51,4 +51,8 @@ class DacFormatTest: DacFormatTestCase() {
     @Test fun javaClassLinks() {
         verifyBothFormats("javaClassLinks")
     }
+
+    @Test fun deprecation() {
+        verifyBothFormats("deprecation")
+    }
 }
