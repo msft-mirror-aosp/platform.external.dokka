@@ -266,7 +266,7 @@ private fun DocumentationNode.isSuperclassFor(node: DocumentationNode): Boolean 
 
 fun DocumentationNode.classNodeNameWithOuterClass(): String {
     assert(kind in NodeKind.classLike)
-    return path.dropWhile { it.kind == NodeKind.Package || it.kind == NodeKind.Module }.joinToString(separator = ".") { it.name }
+    return path.dropWhile { it.kind !in NodeKind.classLike }.joinToString(separator = ".") { it.name }
 }
 
 fun DocumentationNode.deprecatedLevelMessage(): String {
