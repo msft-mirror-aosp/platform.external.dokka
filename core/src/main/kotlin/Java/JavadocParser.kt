@@ -1,12 +1,11 @@
 package org.jetbrains.dokka
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.javadoc.CorePsiDocTagValueImpl
+import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl
 import com.intellij.psi.impl.source.tree.JavaDocElementType
 import com.intellij.psi.javadoc.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.dokka.Model.CodeNode
 import org.jetbrains.kotlin.utils.join
 import org.jetbrains.kotlin.utils.keysToMap
@@ -172,7 +171,7 @@ class JavadocParser(
     fun PsiDocTag.getApiLevel(): String? {
         if (dataElements.isNotEmpty()) {
             val data = dataElements
-            if (data[0] is CorePsiDocTagValueImpl) {
+            if (data[0] is PsiDocTagValueImpl) {
                 val docTagValue = data[0]
                 if (docTagValue.firstChild != null) {
                     val apiLevel = docTagValue.firstChild
@@ -420,11 +419,12 @@ class JavadocParser(
                 linkNode
             }
             linkSignature != null -> {
+                @Suppress("USELESS_CAST")
+                val signature: String = linkSignature as String
                 val linkNode =
                     ContentNodeLazyLink(
-                        (tag.valueElement ?: linkElement).text,
-                        { -> refGraph.lookupOrWarn(linkSignature, logger) }
-                    )
+                        (tag.valueElement ?: linkElement).text
+                    ) { refGraph.lookupOrWarn(signature, logger) }
                 linkNode.append(text)
                 linkNode
             }
@@ -560,7 +560,7 @@ class JavadocParser(
         val superMethods = current.findSuperMethods()
         for (method in superMethods) {
             val docs = method.docComment?.descriptionElements?.dropWhile { it.text.trim().isEmpty() }
-            if (!docs.isNullOrEmpty()) {
+            if (docs?.isNotEmpty() == true) {
                 return method
             }
         }
