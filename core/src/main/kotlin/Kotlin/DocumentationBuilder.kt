@@ -265,12 +265,11 @@ class DocumentationBuilder
                     node.append(targetNode, RefKind.ExternalType)
                     node.append(DocumentationNode(externalLink, Content.Empty, NodeKind.ExternalLink), RefKind.Link)
                 }
-            } else {
-                link(
-                    node, classifierDescriptor,
-                    if (classifierDescriptor.isBoringBuiltinClass()) RefKind.HiddenLink else RefKind.Link
-                )
             }
+            link(
+                node, classifierDescriptor,
+                if (classifierDescriptor.isBoringBuiltinClass()) RefKind.HiddenLink else RefKind.Link
+            )
             if (classifierDescriptor !is TypeParameterDescriptor) {
                 node.append(
                     DocumentationNode(
@@ -740,7 +739,7 @@ class DocumentationBuilder
     }
 
     fun FunctionDescriptor.build(external: Boolean = false): DocumentationNode {
-        if (ErrorUtils.containsErrorType(this)) {
+        if (ErrorUtils.containsErrorTypeInParameters(this) || ErrorUtils.containsErrorType(this.returnType)) {
             logger.warn("Found an unresolved type in ${signatureWithSourceLocation()}")
         }
 
