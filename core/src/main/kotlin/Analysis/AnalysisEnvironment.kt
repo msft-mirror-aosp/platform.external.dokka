@@ -15,8 +15,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl
+import com.intellij.psi.javadoc.CustomJavadocTagProvider
+import com.intellij.psi.javadoc.JavadocManager
+import com.intellij.psi.javadoc.JavadocTagInfo
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltIns
@@ -96,10 +99,19 @@ class AnalysisEnvironment(val messageCollector: MessageCollector) : Disposable {
         CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(),
                 OrderEnumerationHandler.EP_NAME, OrderEnumerationHandler.Factory::class.java)
 
+        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(environment.project),
+            JavadocTagInfo.EP_NAME, JavadocTagInfo::class.java)
+        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(),
+            CustomJavadocTagProvider.EP_NAME, CustomJavadocTagProvider::class.java)
+
         projectComponentManager.registerService(ProjectFileIndex::class.java,
                 projectFileIndex)
         projectComponentManager.registerService(ProjectRootManager::class.java,
                 CoreProjectRootManager(projectFileIndex))
+        projectComponentManager.registerService(JavadocManager::class.java,
+            JavadocManagerImpl(environment.project))
+        projectComponentManager.registerService(CustomJavadocTagProvider::class.java,
+            CustomJavadocTagProvider { emptyList() })
         return environment
     }
 
