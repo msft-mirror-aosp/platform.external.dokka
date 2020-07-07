@@ -29,12 +29,13 @@ fun getSignature(element: PsiElement?) = when(element) {
 private fun PsiType.typeSignature(): String = when(this) {
     is PsiArrayType -> "Array((${componentType.typeSignature()}))"
     is PsiPrimitiveType -> "kotlin." + canonicalText.capitalize()
+    is PsiClassType -> resolve()?.qualifiedName ?: className
     else -> mapTypeName(this)
 }
 
 private fun mapTypeName(psiType: PsiType): String = when (psiType) {
     is PsiPrimitiveType -> psiType.canonicalText
-    is PsiClassType -> psiType.resolve()?.qualifiedName ?: psiType.className
+    is PsiClassType -> psiType.resolve()?.name ?: psiType.className
     is PsiEllipsisType -> mapTypeName(psiType.componentType)
     is PsiArrayType -> "kotlin.Array"
     else -> psiType.canonicalText
