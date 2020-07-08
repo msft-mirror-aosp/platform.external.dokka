@@ -279,3 +279,24 @@ fun DocumentationNode.deprecatedLevelMessage(): String {
     }
     return "This $kindName was deprecated in API level ${deprecatedLevel.name}."
 }
+
+fun DocumentationNode.convertDeprecationDetailsToChildren() {
+    val toProcess = details.toMutableList()
+    while (!toProcess.isEmpty()) {
+        var child = toProcess.removeAt(0)
+        if (child.details.isEmpty() && child.name != "") {
+            updateContent { text(child.name.cleanForAppending()) }
+        }
+        else toProcess.addAll(0, child.details)
+    }
+}
+
+   /*
+    * Removes extraneous quotation marks and adds a ". " to make appending children readable.
+    */
+fun String.cleanForAppending(): String {
+    var result = this
+    if (this.first() == this.last() && this.first() == '"') result = result.substring(1, result.length - 1)
+    if (result[result.length - 2] != '.' && result.last() != ' ') result += ". "
+    return result
+}
