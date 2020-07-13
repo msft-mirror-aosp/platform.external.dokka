@@ -51,7 +51,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
     protected fun FlowContent.contentNodesToMarkup(content: List<ContentNode>, contextUri: URI = uri): Unit =
         content.forEach { contentNodeToMarkup(it, contextUri) }
 
-    private fun FlowContent.contentNodeToMarkup(content: ContentNode, contextUri: URI) {
+    protected fun FlowContent.contentNodeToMarkup(content: ContentNode, contextUri: URI = uri) {
         when (content) {
             is ContentText -> +content.text
             is ContentSymbol -> span("symbol") { +content.text }
@@ -136,7 +136,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             }
             ContentHardLineBreak -> br
 
-            is ContentParagraph -> p { contentNodesToMarkup(content.children, contextUri) }
+            is ContentParagraph -> p(classes = content.label) { contentNodesToMarkup(content.children, contextUri) }
 
             is NodeRenderContent -> renderedSignature(content.node, mode = content.mode)
             is ContentNodeLink -> {
@@ -392,6 +392,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         bodyContent = {
             h1 { +page.node.name }
             nodeContent(page.node)
+            summaryNodeGroup(page.interfaces, "Interfaces", headerAsRow = false) { classLikeRow(it) }
             summaryNodeGroup(page.classes, "Classes", headerAsRow = false) { classLikeRow(it) }
             summaryNodeGroup(page.exceptions, "Exceptions", headerAsRow = false) { classLikeRow(it) }
             summaryNodeGroup(page.typeAliases, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
@@ -884,7 +885,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         emphasis: Boolean = true): ContentNode? {
         val deprecated = node.deprecation
         deprecated?.let {
-            return ContentParagraph().apply {
+            return ContentParagraph("caution").apply {
                 if (prefix) {
                     append(ContentStrong().apply { text(
                         if (deprecated.content.children.size == 0) "Deprecated."
@@ -1088,6 +1089,8 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 assert(node.kind == NodeKind.Package)
             }
 
+            val interfaces = node.members(NodeKind.Interface) +
+                    node.members(NodeKind.Class).flatMap { it.members(NodeKind.Interface) }
             val classes = node.members(NodeKind.Class)
             val exceptions = node.members(NodeKind.Exception)
             val typeAliases = node.members(NodeKind.TypeAlias)
