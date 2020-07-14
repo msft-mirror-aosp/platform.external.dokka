@@ -514,6 +514,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             bodyContent = {
                 h1 { +page.node.name }
                 nodeContent(page.node)
+                summaryNodeGroup(page.interfaces.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Interfaces", headerAsRow = false) { classLikeRow(it) }
                 summaryNodeGroup(page.classes.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Classes", headerAsRow = false) { classLikeRow(it) }
                 summaryNodeGroup(page.exceptions.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Exceptions", headerAsRow = false) { classLikeRow(it) }
                 summaryNodeGroup(page.typeAliases.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
