@@ -439,7 +439,13 @@ class JavadocParser(
             val externalLink = resolveExternalLink(valueElement)
             val linkSignature by lazy { resolveInternalLink(valueElement) }
             if (externalLink != null || linkSignature != null) {
-                val labelText = tag.dataElements.firstOrNull { it is PsiDocToken }?.text ?: valueElement!!.text
+
+                // sometimes `dataElements` contains multiple `PsiDocToken` elements and some have whitespace in them
+                // this is best effort to find the first non-empty one before falling back to using the symbol name.
+                val labelText = tag.dataElements.firstOrNull {
+                    it is PsiDocToken && it.text?.trim()?.isNotEmpty() ?: false
+                }?.text ?: valueElement!!.text
+
                 val linkTarget = if (externalLink != null) "href=\"$externalLink\"" else "docref=\"$linkSignature\""
                 val link = "<a $linkTarget>$labelText</a>"
                 if (tag.name == "link") "<code>$link</code>" else link
