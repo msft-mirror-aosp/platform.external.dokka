@@ -15,6 +15,7 @@ allprojects { project ->
                 zipTask.from(report.destination)
             }
         }
+        task.ignoreFailures = true
     }
     if (project.rootProject == project) {
         def zipMaven = project.tasks.create("zipMaven", Zip) {
@@ -22,8 +23,16 @@ allprojects { project ->
             destinationDir destDir
             archiveName = "maven.zip"
         }
-        zipMaven.dependsOn(":runners:android-gradle-plugin:publishToDistMaven")
-        zipMaven.dependsOn(":runners:gradle-plugin:publishToDistMaven")
-        zipMaven.dependsOn(":runners:fatjar:publishToDistMaven")
+
+        def copyRepository = project.tasks.create("copyRepository", Copy) {
+            from file("${project.buildDir}/dist-maven")
+            into "${destDir}/repository"
+        }
+
+        [copyRepository, zipMaven].forEach {
+            it.dependsOn(":runners:android-gradle-plugin:publishToDistMaven")
+            it.dependsOn(":runners:gradle-plugin:publishToDistMaven")
+            it.dependsOn(":runners:fatjar:publishToDistMaven")
+        }
     }
 }
