@@ -72,11 +72,21 @@ class DokkaArguments {
     @set:Argument(value = "collectInheritedExtensionsFromLibraries", description = "Search for applicable extensions in libraries")
     var collectInheritedExtensionsFromLibraries: Boolean = false
 
-    @set:Argument(value = "generateClassIndexPage", description = "Generate classes.html index page.")
+    @set:Argument(value = "generateClassIndexPage", description = "Generate classes.html index page. [Deprecated]: use noGenerateClassIndexPage instead.")
+    @Deprecated("There is no way to set this to false.", replaceWith = ReplaceWith(
+        expression ="noGenerateClassIndexPage"))
     var generateClassIndexPage: Boolean = true
 
-    @set:Argument(value = "generatePackageIndexPage", description = "Generate packages.html index page.")
+    @set:Argument(value = "generatePackageIndexPage", description = "Generate packages.html index page. [Deprecated]: use noGeneratePackageIndexPage instead.")
+    @Deprecated("There is no way to set this to false.", replaceWith = ReplaceWith(
+        expression ="noGeneratePackageIndexPage"))
     var generatePackageIndexPage: Boolean = true
+
+    @set:Argument(value = "noGenerateClassIndexPage", description = "Disable classes.html index page.")
+    var noGenerateClassIndexPage: Boolean = false
+
+    @set:Argument(value = "noGeneratePackageIndexPage", description = "Disable packages.html index page.")
+    var noGeneratePackageIndexPage: Boolean = false
 
     @set:Argument(value = "outlineRoot", description = "Relative root directory the outline files. I.e. androidx/core/")
     var outlineRoot: String = ""
@@ -142,8 +152,8 @@ object MainKt {
             languageVersion = arguments.languageVersion,
             apiVersion = arguments.apiVersion,
             collectInheritedExtensionsFromLibraries = arguments.collectInheritedExtensionsFromLibraries,
-            generateClassIndexPage = arguments.generateClassIndexPage,
-            generatePackageIndexPage = arguments.generatePackageIndexPage,
+            generateClassIndexPage = !arguments.noGenerateClassIndexPage,
+            generatePackageIndexPage = !arguments.noGeneratePackageIndexPage,
             outlineRoot = arguments.outlineRoot,
             dacRoot = arguments.dacRoot,
             noJdkLink = arguments.noJdkLink
