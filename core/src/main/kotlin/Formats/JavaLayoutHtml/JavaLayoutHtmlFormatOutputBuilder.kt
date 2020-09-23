@@ -253,7 +253,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                         renderedSignature(receiver.detail(NodeKind.Type), SUMMARY)
                         +"."
                     }
-                    a(href = node) { +node.name }
+                    a(href = node) { +node.prettyName }
                     shortFunctionParametersList(node)
                 }
             }
