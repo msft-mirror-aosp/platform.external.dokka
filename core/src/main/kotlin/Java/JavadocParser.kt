@@ -654,7 +654,7 @@ class JavadocParser(
                     appendContentBetweenIncludes(path, betweenTag)
                 }
             } catch (e: java.lang.Exception) {
-                logger.error("No file found when processing Java @sample. Path to sample: $path")
+                logger.error("No file found when processing Java @sample. Path to sample: $path\n")
             }
         }
 
