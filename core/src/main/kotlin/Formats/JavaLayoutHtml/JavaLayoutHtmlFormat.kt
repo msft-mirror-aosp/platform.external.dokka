@@ -119,7 +119,7 @@ fun DocumentationNode.signatureForAnchor(logger: DokkaLogger): String {
                 append("Companion.")
             }
             appendReceiverIfSo()
-            append(prettyName)
+            append(name)
             details(NodeKind.Parameter).joinTo(this, prefix = "(", postfix = ")") { it.detail(NodeKind.Type).qualifiedNameFromType() }
         }
         NodeKind.Property, NodeKind.CompanionObjectProperty -> buildString {

@@ -75,7 +75,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             attributes["data-version-added"] = node.apiLevel.name
             h3(classes = "api-name") {
                 //id = node.signatureForAnchor(logger).urlEncoded()
-                +node.prettyName
+                +node.name
             }
             apiAndDeprecatedVersions(node)
             pre(classes = "api-signature no-pretty-print") { renderedSignature(node, LanguageService.RenderMode.FULL) }
