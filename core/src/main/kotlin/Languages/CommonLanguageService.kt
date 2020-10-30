@@ -53,6 +53,31 @@ abstract class CommonLanguageService : LanguageService {
             }
     }
 
+    protected fun <T> ContentBlock.renderHardWrappingList(
+        nodes: List<T>, separator: String = ", ",
+        renderItem: (T) -> Unit
+    ) {
+        if (nodes.none())
+            return
+
+        if (nodes.count() > 1) {
+            hardLineBreak()
+            repeat(4) {
+                nbsp()
+            }
+        }
+
+        renderItem(nodes.first())
+        nodes.drop(1).forEach {
+            symbol(separator)
+            hardLineBreak()
+            repeat(4) {
+                nbsp()
+            }
+            renderItem(it)
+        }
+    }
+
     protected fun <T> ContentBlock.renderList(
         nodes: List<T>, separator: String = ", ",
         noWrap: Boolean = false, renderItem: (T) -> Unit

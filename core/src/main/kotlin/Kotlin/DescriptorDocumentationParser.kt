@@ -20,7 +20,9 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
@@ -71,6 +73,8 @@ class DescriptorDocumentationParser @Inject constructor(
                 ?.resolveToDescriptorIfAny()
                 ?: descriptor
 
+        // This will build the initial node for all content above the tags, however we also sometimes have @Sample
+        // tags between content, so we handle that case below
         var kdocText = kdoc.getContent()
         // workaround for code fence parsing problem in IJ markdown parser
         if (kdocText.endsWith("```") || kdocText.endsWith("~~~")) {
@@ -83,10 +87,29 @@ class DescriptorDocumentationParser @Inject constructor(
             val tags = kdoc.getTags()
             tags.forEach {
                 when (it.knownTag) {
-                    KDocKnownTag.SAMPLE ->
+                    KDocKnownTag.SAMPLE -> {
                         content.append(sampleService.resolveSample(contextDescriptor, it.getSubjectName(), it))
+                        // If the sample tag has text below it, it will be considered as the child of the tag, so add it
+                        val tagSubContent = it.getContent()
+                        if (tagSubContent.isNotBlank()) {
+                            val markdownNode = parseMarkdown(tagSubContent)
+                            buildInlineContentTo(markdownNode, content, LinkResolver(linkMap, { href -> linkResolver.resolveContentLink(contextDescriptor, href) }))
+                        }
+                    }
                     KDocKnownTag.SEE ->
                         content.addTagToSeeAlso(contextDescriptor, it)
+                    KDocKnownTag.PARAM -> {
+                        val section = content.addSection(javadocSectionDisplayName(it.name), it.getSubjectName())
+                        section.append(ParameterInfoNode {
+                            val signature = signatureProvider.signature(descriptor)
+                            refGraph.lookupOrWarn(signature, logger)?.details?.find { node ->
+                                node.kind == NodeKind.Parameter && node.name == it.getSubjectName()
+                            }
+                        })
+                        val sectionContent = it.getContent()
+                        val markdownNode = parseMarkdown(sectionContent)
+                        buildInlineContentTo(markdownNode, section, LinkResolver(linkMap, { href -> linkResolver.resolveContentLink(contextDescriptor, href) }))
+                    }
                     else -> {
                         val section = content.addSection(javadocSectionDisplayName(it.name), it.getSubjectName())
                         val sectionContent = it.getContent()
@@ -273,4 +296,38 @@ class DescriptorDocumentationParser @Inject constructor(
         return attribute
     }
 
+}
+
+/**
+ * Lazily executed wrapper node holding a [NodeKind.Parameter] node that will be used to add type
+ * and default value information to
+ * [org.jetbrains.dokka.Formats.DevsiteLayoutHtmlFormatOutputBuilder].
+ *
+ * We make this a [ContentBlock] instead of a [ContentNode] so we won't fallback to calling
+ * [toString] on this and trying to add it to documentation somewhere - returning an empty list
+ * should make this a no-op.
+ *
+ * @property wrappedNode lazily executable lambda that will return the matching documentation node
+ * for this parameter (if it exists)
+ */
+class ParameterInfoNode(private val wrappedNode: () -> DocumentationNode?) : ContentBlock() {
+    private var computed = false
+
+    val parameterContent: NodeRenderContent?
+        get() = lazyNode
+
+    private var lazyNode: NodeRenderContent? = null
+        get() {
+            if (!computed) {
+                computed = true
+
+                val node = wrappedNode()
+                if (node != null) {
+                    field = NodeRenderContent(node, LanguageService.RenderMode.SUMMARY)
+                }
+            }
+        return field
+    }
+
+    override val children = arrayListOf<ContentNode>()
 }
