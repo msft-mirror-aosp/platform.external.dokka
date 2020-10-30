@@ -134,6 +134,12 @@ open class DocumentationNode(val name: String,
         get() = details(NodeKind.Supertype)
     val signatureName = detailOrNull(NodeKind.Signature)?.name
 
+    val prettyName : String
+        get() = when(kind) {
+            NodeKind.Constructor -> owner!!.name
+            else -> name
+        }
+
     val superclassType: DocumentationNode?
         get() = when (kind) {
             NodeKind.Supertype -> {
