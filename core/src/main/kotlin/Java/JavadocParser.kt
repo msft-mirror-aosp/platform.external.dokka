@@ -1,12 +1,11 @@
 package org.jetbrains.dokka
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.javadoc.CorePsiDocTagValueImpl
+import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl
 import com.intellij.psi.impl.source.tree.JavaDocElementType
 import com.intellij.psi.javadoc.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.dokka.Model.CodeNode
 import org.jetbrains.kotlin.utils.join
 import org.jetbrains.kotlin.utils.keysToMap
@@ -94,7 +93,9 @@ class JavadocParser(
                     when (tagName) {
                         "param" -> {
                             section.appendTypeElement(signature) {
-                                it.details.find { it.kind == NodeKind.Parameter }?.detailOrNull(NodeKind.Type)
+                                it.details
+                                    .find { node -> node.kind == NodeKind.Parameter && node.name == tag.getSubjectName() }
+                                    ?.detailOrNull(NodeKind.Type)
                             }
                         }
                         "return" -> {
@@ -170,7 +171,7 @@ class JavadocParser(
     fun PsiDocTag.getApiLevel(): String? {
         if (dataElements.isNotEmpty()) {
             val data = dataElements
-            if (data[0] is CorePsiDocTagValueImpl) {
+            if (data[0] is PsiDocTagValueImpl) {
                 val docTagValue = data[0]
                 if (docTagValue.firstChild != null) {
                     val apiLevel = docTagValue.firstChild
@@ -355,7 +356,21 @@ class JavadocParser(
             else ContentParagraph()
         }
 
-        "script" -> ScriptBlock(element.attr("type"), element.attr("src"))
+        "script" -> {
+
+            // If the `type` attr is an empty string, we want to use null instead so that the resulting generated
+            // Javascript does not contain a `type` attr.
+            //
+            // Example:
+            // type == ""   => <script type="" src="...">
+            // type == null => <script src="...">
+            val type = if (element.attr("type").isNotEmpty()) {
+                element.attr("type")
+            } else {
+                null
+            }
+            ScriptBlock(type, element.attr("src"))
+        }
 
         else -> ContentBlock()
     }
@@ -404,11 +419,12 @@ class JavadocParser(
                 linkNode
             }
             linkSignature != null -> {
+                @Suppress("USELESS_CAST")
+                val signature: String = linkSignature as String
                 val linkNode =
                     ContentNodeLazyLink(
-                        (tag.valueElement ?: linkElement).text,
-                        { -> refGraph.lookupOrWarn(linkSignature, logger) }
-                    )
+                        (tag.valueElement ?: linkElement).text
+                    ) { refGraph.lookupOrWarn(signature, logger) }
                 linkNode.append(text)
                 linkNode
             }
@@ -423,7 +439,13 @@ class JavadocParser(
             val externalLink = resolveExternalLink(valueElement)
             val linkSignature by lazy { resolveInternalLink(valueElement) }
             if (externalLink != null || linkSignature != null) {
-                val labelText = tag.dataElements.firstOrNull { it is PsiDocToken }?.text ?: valueElement!!.text
+
+                // sometimes `dataElements` contains multiple `PsiDocToken` elements and some have whitespace in them
+                // this is best effort to find the first non-empty one before falling back to using the symbol name.
+                val labelText = tag.dataElements.firstOrNull {
+                    it is PsiDocToken && it.text?.trim()?.isNotEmpty() ?: false
+                }?.text ?: valueElement!!.text
+
                 val linkTarget = if (externalLink != null) "href=\"$externalLink\"" else "docref=\"$linkSignature\""
                 val link = "<a $linkTarget>$labelText</a>"
                 if (tag.name == "link") "<code>$link</code>" else link
@@ -467,10 +489,9 @@ class JavadocParser(
             }
         }
 
-        // Loads script from CDN, ScriptBlock objects constructs HTML object
+        // Loads MathJax script from local source, which then updates MathJax HTML code
         "usesMathJax" -> {
-            "<script type=\"text/javascript\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/" +
-                    "latest.js?config=TeX-AMS_SVG\"></script>"
+            "<script src=\"/_static/js/managed/mathjax/MathJax.js?config=TeX-AMS_SVG\"></script>"
         }
 
         else -> tag.text
@@ -545,7 +566,7 @@ class JavadocParser(
         val superMethods = current.findSuperMethods()
         for (method in superMethods) {
             val docs = method.docComment?.descriptionElements?.dropWhile { it.text.trim().isEmpty() }
-            if (!docs.isNullOrEmpty()) {
+            if (docs?.isNotEmpty() == true) {
                 return method
             }
         }
@@ -633,7 +654,7 @@ class JavadocParser(
                     appendContentBetweenIncludes(path, betweenTag)
                 }
             } catch (e: java.lang.Exception) {
-                logger.error("No file found when processing Java @sample. Path to sample: $path")
+                logger.error("No file found when processing Java @sample. Path to sample: $path\n")
             }
         }
 
