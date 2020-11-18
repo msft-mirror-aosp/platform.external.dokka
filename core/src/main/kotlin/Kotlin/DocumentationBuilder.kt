@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.idea.kdoc.findKDoc
 import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
@@ -265,12 +266,11 @@ class DocumentationBuilder
                     node.append(targetNode, RefKind.ExternalType)
                     node.append(DocumentationNode(externalLink, Content.Empty, NodeKind.ExternalLink), RefKind.Link)
                 }
-            } else {
-                link(
-                    node, classifierDescriptor,
-                    if (classifierDescriptor.isBoringBuiltinClass()) RefKind.HiddenLink else RefKind.Link
-                )
             }
+            link(
+                node, classifierDescriptor,
+                if (classifierDescriptor.isBoringBuiltinClass()) RefKind.HiddenLink else RefKind.Link
+            )
             if (classifierDescriptor !is TypeParameterDescriptor) {
                 node.append(
                     DocumentationNode(
@@ -310,8 +310,8 @@ class DocumentationBuilder
                         else -> return@forEach
                     }
                     append(annotationNode, refKind)
+                    if (refKind == RefKind.Deprecation) annotationNode.convertDeprecationDetailsToChildren()
                 }
-
             }
         }
     }
@@ -740,7 +740,7 @@ class DocumentationBuilder
     }
 
     fun FunctionDescriptor.build(external: Boolean = false): DocumentationNode {
-        if (ErrorUtils.containsErrorType(this)) {
+        if (ErrorUtils.containsErrorTypeInParameters(this) || ErrorUtils.containsErrorType(this.returnType)) {
             logger.warn("Found an unresolved type in ${signatureWithSourceLocation()}")
         }
 
@@ -909,14 +909,19 @@ class DocumentationBuilder
         return node
     }
 
-    fun AnnotationDescriptor.build(): DocumentationNode? {
+    fun AnnotationDescriptor.build(isWithinReplaceWith: Boolean = false): DocumentationNode? {
         val annotationClass = type.constructor.declarationDescriptor
         if (annotationClass == null || ErrorUtils.isError(annotationClass)) {
             return null
         }
         val node = DocumentationNode(annotationClass.name.asString(), Content.Empty, NodeKind.Annotation)
-        allValueArguments.forEach { (name, value) ->
-            val valueNode = value.toDocumentationNode()
+        allValueArguments.forEach foreach@{ (name, value) ->
+            if (name.toString() == "imports" && value.toString() == "[]") return@foreach
+            var valueNode: DocumentationNode? = null
+            if (value.toString() == "@kotlin.ReplaceWith") {
+                valueNode = (value.value as AnnotationDescriptor).build(true)
+            }
+            else valueNode = value.toDocumentationNode(isWithinReplaceWith)
             if (valueNode != null) {
                 val paramNode = DocumentationNode(name.asString(), Content.Empty, NodeKind.Parameter)
                 paramNode.append(valueNode, RefKind.Detail)
@@ -926,10 +931,10 @@ class DocumentationBuilder
         return node
     }
 
-    fun ConstantValue<*>.toDocumentationNode(): DocumentationNode? = value?.let { value ->
+    fun ConstantValue<*>.toDocumentationNode(isWithinReplaceWith: Boolean = false): DocumentationNode? = value?.let { value ->
         when (value) {
             is String ->
-                "\"" + StringUtil.escapeStringCharacters(value) + "\""
+                (if (isWithinReplaceWith) "Replace with: " else "") + "\"" + StringUtil.escapeStringCharacters(value) + "\""
             is EnumEntrySyntheticClassDescriptor ->
                 value.containingDeclaration.name.asString() + "." + value.name.asString()
             is Pair<*, *> -> {
