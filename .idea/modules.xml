@@ -18,6 +18,34 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/core_main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/core_main.iml" group="core" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/core_test.iml" filepath="$PROJECT_DIR$/.idea/modules/core/core_test.iml" group="core" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/dokka.iml" filepath="$PROJECT_DIR$/.idea/modules/dokka.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dokka.buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/dokka.buildSrc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dokka.buildSrc.main.iml" filepath="$PROJECT_DIR$/.idea/modules/dokka.buildSrc.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dokka.buildSrc.test.iml" filepath="$PROJECT_DIR$/.idea/modules/dokka.buildSrc.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/dokka.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/dokka.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/dokka.core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/dokka.core.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/dokka.core.test.iml" filepath="$PROJECT_DIR$/.idea/modules/core/dokka.core.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/integration/dokka.integration.iml" filepath="$PROJECT_DIR$/.idea/modules/integration/dokka.integration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/integration/dokka.integration.main.iml" filepath="$PROJECT_DIR$/.idea/modules/integration/dokka.integration.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/integration/dokka.integration.test.iml" filepath="$PROJECT_DIR$/.idea/modules/integration/dokka.integration.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/dokka.runners.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/dokka.runners.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/android-gradle-plugin/dokka.runners.android-gradle-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/android-gradle-plugin/dokka.runners.android-gradle-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/android-gradle-plugin/dokka.runners.android-gradle-plugin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/android-gradle-plugin/dokka.runners.android-gradle-plugin.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/android-gradle-plugin/dokka.runners.android-gradle-plugin.test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/android-gradle-plugin/dokka.runners.android-gradle-plugin.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/ant/dokka.runners.ant.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/ant/dokka.runners.ant.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/ant/dokka.runners.ant.main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/ant/dokka.runners.ant.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/ant/dokka.runners.ant.test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/ant/dokka.runners.ant.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/cli/dokka.runners.cli.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/cli/dokka.runners.cli.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/cli/dokka.runners.cli.main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/cli/dokka.runners.cli.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/cli/dokka.runners.cli.test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/cli/dokka.runners.cli.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/fatjar/dokka.runners.fatjar.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/fatjar/dokka.runners.fatjar.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/fatjar/dokka.runners.fatjar.main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/fatjar/dokka.runners.fatjar.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/fatjar/dokka.runners.fatjar.test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/fatjar/dokka.runners.fatjar.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/gradle-integration-tests/dokka.runners.gradle-integration-tests.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/gradle-integration-tests/dokka.runners.gradle-integration-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/gradle-integration-tests/dokka.runners.gradle-integration-tests.main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/gradle-integration-tests/dokka.runners.gradle-integration-tests.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/gradle-integration-tests/dokka.runners.gradle-integration-tests.test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/gradle-integration-tests/dokka.runners.gradle-integration-tests.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/gradle-plugin/dokka.runners.gradle-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/gradle-plugin/dokka.runners.gradle-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/gradle-plugin/dokka.runners.gradle-plugin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/gradle-plugin/dokka.runners.gradle-plugin.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/gradle-plugin/dokka.runners.gradle-plugin.test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/gradle-plugin/dokka.runners.gradle-plugin.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/fatjar/fatjar.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/fatjar/fatjar.iml" group="runners/fatjar" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/fatjar/fatjar_main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/fatjar/fatjar_main.iml" group="runners/fatjar" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/fatjar/fatjar_test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/fatjar/fatjar_test.iml" group="runners/fatjar" />
@@ -33,6 +61,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/maven-plugin/maven-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/maven-plugin/maven-plugin.iml" group="runners/maven-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/maven-plugin/maven-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/maven-plugin/maven-plugin_main.iml" group="runners/maven-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/maven-plugin/maven-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/maven-plugin/maven-plugin_test.iml" group="runners/maven-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/org.jetbrains.dokka.dokka.iml" filepath="$PROJECT_DIR$/.idea/modules/org.jetbrains.dokka.dokka.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/runners/runners.iml" filepath="$PROJECT_DIR$/.idea/modules/runners/runners.iml" group="runners" />
     </modules>
   </component>
