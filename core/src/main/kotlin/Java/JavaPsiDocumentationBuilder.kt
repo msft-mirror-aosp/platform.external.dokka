@@ -29,12 +29,13 @@ fun getSignature(element: PsiElement?) = when(element) {
 private fun PsiType.typeSignature(): String = when(this) {
     is PsiArrayType -> "Array((${componentType.typeSignature()}))"
     is PsiPrimitiveType -> "kotlin." + canonicalText.capitalize()
+    is PsiClassType -> resolve()?.qualifiedName ?: className
     else -> mapTypeName(this)
 }
 
 private fun mapTypeName(psiType: PsiType): String = when (psiType) {
     is PsiPrimitiveType -> psiType.canonicalText
-    is PsiClassType -> psiType.resolve()?.qualifiedName ?: psiType.className
+    is PsiClassType -> psiType.resolve()?.name ?: psiType.className
     is PsiEllipsisType -> mapTypeName(psiType.componentType)
     is PsiArrayType -> "kotlin.Array"
     else -> psiType.canonicalText
@@ -119,8 +120,12 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
             if (modifierList != null) {
                 modifierList.annotations.filter { !ignoreAnnotation(it) }.forEach {
                     val annotation = it.build()
-                    node.append(annotation,
-                            if (it.qualifiedName == "java.lang.Deprecated") RefKind.Deprecation else RefKind.Annotation)
+                    if (it.qualifiedName == "java.lang.Deprecated" || it.qualifiedName == "kotlin.Deprecated") {
+                        node.append(annotation, RefKind.Deprecation)
+                        annotation.convertDeprecationDetailsToChildren()
+                    } else {
+                        node.append(annotation, RefKind.Annotation)
+                    }
                 }
             }
         }
@@ -209,20 +214,8 @@ class JavaPsiDocumentationBuilder : JavaDocumentationBuilder {
         superTypes.filter { !ignoreSupertype(it) }.forEach { superType ->
             node.appendType(superType, NodeKind.Supertype)
             val superClass = superType.resolve()
-            // parentNode is the actual DocumentationNode of this class's supertype
-            // It is necessary to create documentation links back to the superclass from inherited methods
-            val parentNode = refGraph.lookup(superType.typeSignature())
-            if (superClass != null && parentNode != null) {
+            if (superClass != null) {
                 link(superClass, node, RefKind.Inheritor)
-                // Explicitly add the methods of the superclass (which are not overridden) as nodes to this class
-                val overriddenMethods = methods.toList().flatMap { it.findSuperMethods().toList() }
-                val inheritedMethods = superClass.methods.filter { it !in overriddenMethods }.toTypedArray()
-
-                node.appendChildren(inheritedMethods, RefKind.InheritedMember) {
-                    val child = build()
-                    child.addReferenceTo(parentNode, RefKind.Owner)
-                    return@appendChildren child
-                }
             }
         }
 
