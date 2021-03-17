@@ -1,6 +1,6 @@
 package org.jetbrains.dokka
 
-import org.jetbrains.dokka.Formats.classNodeNameWithOuterClass
+import org.jetbrains.dokka.classNodeNameWithOuterClass
 import org.jetbrains.dokka.LanguageService.RenderMode
 
 /**
@@ -8,8 +8,10 @@ import org.jetbrains.dokka.LanguageService.RenderMode
  */
 class NewJavaLanguageService : CommonLanguageService() {
     override fun showModifierInSummary(node: DocumentationNode): Boolean {
-        return true
+        return node.name !in fullOnlyModifiers
     }
+
+    private val fullOnlyModifiers = setOf("public", "protected", "private")
 
     override fun render(node: DocumentationNode, renderMode: RenderMode): ContentNode {
         return content {
@@ -23,7 +25,7 @@ class NewJavaLanguageService : CommonLanguageService() {
                 NodeKind.UpperBound -> renderType(node)
                 NodeKind.Parameter -> renderParameter(node)
                 NodeKind.Constructor,
-                NodeKind.Function -> renderFunction(node)
+                NodeKind.Function -> renderFunction(node, renderMode)
                 NodeKind.Property -> renderProperty(node)
                 NodeKind.Field -> renderField(node, renderMode)
                 NodeKind.EnumItem -> renderClass(node, renderMode)
@@ -39,7 +41,11 @@ class NewJavaLanguageService : CommonLanguageService() {
         when (node.name) {
             "open", "internal" -> {
             }
-            else -> super.renderModifier(block, node, renderMode, nowrap)
+            else -> {
+                if (node.name !in fullOnlyModifiers || renderMode == RenderMode.FULL) {
+                    super.renderModifier(block, node, renderMode, nowrap)
+                }
+            }
         }
     }
 
@@ -185,7 +191,11 @@ class NewJavaLanguageService : CommonLanguageService() {
         }
     }
 
-    private fun ContentBlock.renderFunction(node: DocumentationNode) {
+    private fun ContentBlock.renderFunction(
+        node: DocumentationNode,
+        renderMode: RenderMode
+    ) {
+        renderModifiersForNode(node, renderMode)
         when (node.kind) {
             NodeKind.Constructor -> identifier(node.owner?.name ?: "")
             NodeKind.Function -> {
