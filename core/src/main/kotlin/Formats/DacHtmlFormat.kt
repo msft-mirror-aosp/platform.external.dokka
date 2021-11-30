@@ -5,11 +5,10 @@ import com.google.inject.name.Named
 import kotlinx.html.*
 import org.jetbrains.dokka.*
 import org.jetbrains.dokka.Samples.DevsiteSampleProcessingService
+import org.jetbrains.dokka.Kotlin.ParameterInfoNode
 import org.jetbrains.dokka.Utilities.firstSentence
-import org.w3c.dom.html.HTMLElement
 import java.lang.Math.max
 import java.net.URI
-import java.util.Collections.emptyMap
 import kotlin.reflect.KClass
 
 /**
@@ -76,7 +75,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             attributes["data-version-added"] = node.apiLevel.name
             h3(classes = "api-name") {
                 //id = node.signatureForAnchor(logger).urlEncoded()
-                +node.name
+                +node.prettyName
             }
             apiAndDeprecatedVersions(node)
             pre(classes = "api-signature no-pretty-print") { renderedSignature(node, LanguageService.RenderMode.FULL) }
@@ -101,9 +100,33 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                 }
                                 sections.forEach {
                                     tr {
-                                        td {
-                                            colSpan = "2"
-                                            metaMarkup(it.children)
+                                        if (it.children.size > 0) {
+                                            td {
+                                                val firstChild = it.children.first()
+                                                if (firstChild is ContentBlock &&
+                                                    firstChild.children.size == 3 &&
+                                                    firstChild.children[0] is NodeRenderContent &&
+                                                    firstChild.children[1] is ContentSymbol &&
+                                                    firstChild.children[2] is ContentText) {
+                                                    // it.children is expected to have two items
+                                                    // First should have 3 children of its own:
+                                                    // - NodeRenderContent is the return type
+                                                    // - ContentSymbol - ":"
+                                                    // - ContentText - " "
+                                                    // We want to only use NodeRenderContent in a separate <td> and
+                                                    // <code> to get proper formatting in DAC.
+                                                    code {
+                                                        metaMarkup(listOf(firstChild.children[0]))
+                                                    }
+                                                } else {
+                                                    metaMarkup(listOf(firstChild))
+                                                }
+                                            }
+                                            td {
+                                                if (it.children.size > 1) {
+                                                    metaMarkup(it.children.subList(1, it.children.size))
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -119,15 +142,25 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                         +name
                                     }
                                 }
-                                sections.forEach {
+                                sections.forEach { section ->
                                     tr {
                                         td {
-                                            code {
-                                                it.subjectName?.let { +it }
+                                            val parameterInfoNode = section.children.find { it is ParameterInfoNode } as? ParameterInfoNode
+                                            // If there is no info found, just display the parameter
+                                            // name.
+                                            if (parameterInfoNode?.parameterContent == null) {
+                                                code {
+                                                    section.subjectName?.let { +it }
+                                                }
+                                            } else {
+                                                // Add already marked up type information here
+                                                metaMarkup(
+                                                    listOf(parameterInfoNode.parameterContent!!)
+                                                )
                                             }
                                         }
                                         td {
-                                            metaMarkup(it.children)
+                                            metaMarkup(section.children)
                                         }
                                     }
                                 }
@@ -142,11 +175,25 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                                 }
                             }
                             ul(classes = "nolist") {
-                                sections.forEach {
-                                    li {
-                                        code {
-                                            metaMarkup(it.children)
+                                sections.filter {it.tag == "See Also"}.forEach {
+                                    it.children.forEach { child ->
+                                        if (child is ContentNodeLazyLink || child is ContentExternalLink) {
+                                            li {
+                                                code {
+                                                    contentNodeToMarkup(child) // Wrap bare links in listItems.
+                                                } // bare links come from the java-to-kotlin parser.
+                                            }
                                         }
+                                        else if (child is ContentUnorderedList) {
+                                            metaMarkup(child.children) // Already wrapped in listItems.
+                                        } // this is how we want things to look. No parser currently does this (yet).
+                                        else if (child is ContentParagraph) {
+                                            li{
+                                                code {
+                                                    metaMarkup (child.children) // Replace paragraphs with listItems.
+                                                } // paragraph-wrapped links come from the kotlin parser
+                                            }
+                                        } // NOTE: currently the java-to-java parser does not add See Also links!
                                     }
                                 }
                             }
@@ -234,7 +281,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
     }
 
     override fun FlowContent.classLikeSummaries(page: Page.ClassPage) = with(page) {
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 nestedClasses,
                 header = "Nested classes",
                 summaryId = "nestedclasses",
@@ -244,7 +291,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             nestedClassSummaryRow(it)
         }
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             attributes,
             header="XML attributes",
             summaryId="lattrs",
@@ -254,7 +301,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             xmlAttributeRow(it)
         }
 
-        expandableSummaryNodeGroupForInheritedMembers(
+        this@classLikeSummaries.expandableSummaryNodeGroupForInheritedMembers(
                 superClasses = inheritedAttributes.entries,
                 header="Inherited XML attributes",
                 tableId="inhattrs",
@@ -262,7 +309,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                 row = { inheritedXmlAttributeRow(it)}
         )
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 constants,
                 header = "Constants",
                 summaryId = "constants",
@@ -270,7 +317,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                 headerAsRow = true
         ) { propertyLikeSummaryRow(it) }
 
-        expandableSummaryNodeGroupForInheritedMembers(
+        this@classLikeSummaries.expandableSummaryNodeGroupForInheritedMembers(
                 superClasses = inheritedConstants.entries,
                 header = "Inherited constants",
                 tableId = "inhconstants",
@@ -279,7 +326,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
         )
 
         constructors.forEach { (visibility, group) ->
-            summaryNodeGroup(
+            this@classLikeSummaries.summaryNodeGroup(
                     group,
                     header = "${visibility.capitalize()} constructors",
                     summaryId = "${visibility.take(3)}ctors",
@@ -290,7 +337,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             }
         }
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             enumValues,
             header = "Enum values",
             summaryId = "enumvalues",
@@ -301,7 +348,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
         }
 
         functions.forEach { (visibility, group) ->
-            summaryNodeGroup(
+            this@classLikeSummaries.summaryNodeGroup(
                     group,
                     header = "${visibility.capitalize()} methods",
                     summaryId = "${visibility.take(3)}methods",
@@ -312,7 +359,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             }
         }
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 companionFunctions,
                 header = "Companion functions",
                 summaryId = "compmethods",
@@ -322,7 +369,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             functionLikeSummaryRow(it)
         }
 
-        expandableSummaryNodeGroupForInheritedMembers(
+        this@classLikeSummaries.expandableSummaryNodeGroupForInheritedMembers(
                 superClasses = inheritedFunctionsByReceiver.entries,
                 header = "Inherited functions",
                 tableId = "inhmethods",
@@ -330,7 +377,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                 row = { inheritedMemberRow(it) }
         )
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 extensionFunctions.entries,
                 header = "Extension functions",
                 summaryId = "extmethods",
@@ -341,7 +388,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                 functionLikeSummaryRow(it)
             }
         }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 inheritedExtensionFunctions.entries,
                 header = "Inherited extension functions",
                 summaryId = "inhextmethods",
@@ -354,7 +401,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
         }
 
         fields.forEach { (visibility, group) ->
-            summaryNodeGroup(
+            this@classLikeSummaries.summaryNodeGroup(
                 group,
                 header = "${visibility.capitalize()} fields",
                 summaryId = "${visibility.take(3)}fields",
@@ -363,7 +410,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             ) { propertyLikeSummaryRow(it) }
         }
 
-        expandableSummaryNodeGroupForInheritedMembers(
+        this@classLikeSummaries.expandableSummaryNodeGroupForInheritedMembers(
             superClasses = inheritedFieldsByReceiver.entries,
             header = "Inherited fields",
             tableId = "inhfields",
@@ -371,7 +418,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             row = { inheritedMemberRow(it) }
         )
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 properties,
                 header = "Properties",
                 summaryId = "properties",
@@ -380,7 +427,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
         ) { propertyLikeSummaryRow(it) }
 
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 companionProperties,
                 "Companion properties",
                 headerAsRow = true
@@ -388,7 +435,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             propertyLikeSummaryRow(it)
         }
 
-        expandableSummaryNodeGroupForInheritedMembers(
+        this@classLikeSummaries.expandableSummaryNodeGroupForInheritedMembers(
                 superClasses = inheritedPropertiesByReceiver.entries,
                 header = "Inherited properties",
                 tableId = "inhfields",
@@ -396,7 +443,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                 row = { inheritedMemberRow(it) }
         )
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 extensionProperties.entries,
                 "Extension properties",
                 headerAsRow = true
@@ -406,7 +453,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             }
         }
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
                 inheritedExtensionProperties.entries,
                 "Inherited extension properties",
                 headerAsRow = true
@@ -433,7 +480,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             id = summaryId
             tbody {
                 if (headerAsRow) {
-                    developerHeading(header, summaryId)
+                    developerHeading(header)
                 }
                 nodes.forEach { node ->
                     row(node)
@@ -467,13 +514,14 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             bodyContent = {
                 h1 { +page.node.name }
                 nodeContent(page.node)
-                summaryNodeGroup(page.classes.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Classes", headerAsRow = false) { classLikeRow(it) }
-                summaryNodeGroup(page.exceptions.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Exceptions", headerAsRow = false) { classLikeRow(it) }
-                summaryNodeGroup(page.typeAliases.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
-                summaryNodeGroup(page.annotations.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Annotations", headerAsRow = false) { classLikeRow(it) }
-                summaryNodeGroup(page.enums.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Enums", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.interfaces.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Interfaces", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.classes.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Classes", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.exceptions.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Exceptions", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.typeAliases.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.annotations.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Annotations", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.enums.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Enums", headerAsRow = false) { classLikeRow(it) }
 
-                summaryNodeGroup(
+                this@composePage.summaryNodeGroup(
                         page.constants.sortedBy { it.name },
                         "Top-level constants summary",
                         headerAsRow = false
@@ -481,7 +529,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                     propertyLikeSummaryRow(it)
                 }
 
-                summaryNodeGroup(
+                this@composePage.summaryNodeGroup(
                         page.functions.sortedBy { it.name },
                         "Top-level functions summary",
                         headerAsRow = false
@@ -489,7 +537,7 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
                     functionLikeSummaryRow(it)
                 }
 
-                summaryNodeGroup(
+                this@composePage.summaryNodeGroup(
                         page.properties.sortedBy { it.name },
                         "Top-level properties summary",
                         headerAsRow = false
@@ -871,25 +919,11 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
     }
 }
 
-fun TBODY.developerHeading(
-    header: String,
-    summaryId: String? = null
-) {
+fun TBODY.developerHeading(header: String) {
     tr {
         th {
             attributes["colSpan"] = "2"
-            dheading {
-                attributes["ds-is"] = "heading"
-                attributes["text"] = header
-                attributes["id"] = summaryId ?: header.replace("\\s".toRegex(), "-").toLowerCase()
-                attributes["level"] = "h3"
-                attributes["toc"] = ""
-                attributes["class"] = ""
-                h3 {
-                    attributes["is-upgraded"] = ""
-                    +header
-                }
-            }
+            +header
         }
     }
 }
@@ -913,8 +947,3 @@ class DacAsJavaFormatDescriptor : JavaLayoutHtmlFormatDescriptorBase(), DefaultA
     override val packageListServiceClass: KClass<out PackageListService> = JavaLayoutHtmlPackageListService::class
     override val outputBuilderFactoryClass: KClass<out JavaLayoutHtmlFormatOutputBuilderFactory> = DevsiteLayoutHtmlFormatOutputBuilderFactoryImpl::class
 }
-
-fun FlowOrPhrasingContent.dheading(block : DHEADING.() -> Unit = {}) : Unit = DHEADING(consumer).visit(block)
-
-class DHEADING(consumer: TagConsumer<*>) :
-    HTMLTag("devsite-heading", consumer, emptyMap(), inlineTag = false, emptyTag = false), HtmlBlockTag

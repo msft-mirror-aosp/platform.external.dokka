@@ -1,6 +1,6 @@
 package org.jetbrains.dokka
 
-import org.jetbrains.dokka.Formats.classNodeNameWithOuterClass
+import org.jetbrains.dokka.classNodeNameWithOuterClass
 import org.jetbrains.dokka.LanguageService.RenderMode
 
 /**
@@ -454,7 +454,7 @@ class KotlinLanguageService : CommonLanguageService() {
 
 fun DocumentationNode.qualifiedNameFromType(): String {
     return details.firstOrNull { it.kind == NodeKind.QualifiedName }?.name
-            ?: (links.firstOrNull() ?: hiddenLinks.firstOrNull())?.qualifiedName()
+            ?: (links.firstOrNull { it.kind != NodeKind.ExternalLink } ?: hiddenLinks.firstOrNull())?.qualifiedName()
             ?: name
 }
 

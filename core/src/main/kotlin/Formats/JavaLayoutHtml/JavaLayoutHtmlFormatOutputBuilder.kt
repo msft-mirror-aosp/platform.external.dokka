@@ -51,7 +51,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
     protected fun FlowContent.contentNodesToMarkup(content: List<ContentNode>, contextUri: URI = uri): Unit =
         content.forEach { contentNodeToMarkup(it, contextUri) }
 
-    private fun FlowContent.contentNodeToMarkup(content: ContentNode, contextUri: URI) {
+    protected fun FlowContent.contentNodeToMarkup(content: ContentNode, contextUri: URI = uri) {
         when (content) {
             is ContentText -> +content.text
             is ContentSymbol -> span("symbol") { +content.text }
@@ -136,7 +136,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             }
             ContentHardLineBreak -> br
 
-            is ContentParagraph -> p { contentNodesToMarkup(content.children, contextUri) }
+            is ContentParagraph -> p(classes = content.label) { contentNodesToMarkup(content.children, contextUri) }
 
             is NodeRenderContent -> renderedSignature(content.node, mode = content.mode)
             is ContentNodeLink -> {
@@ -253,7 +253,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                         renderedSignature(receiver.detail(NodeKind.Type), SUMMARY)
                         +"."
                     }
-                    a(href = node) { +node.name }
+                    a(href = node) { +node.prettyName }
                     shortFunctionParametersList(node)
                 }
             }
@@ -392,13 +392,14 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         bodyContent = {
             h1 { +page.node.name }
             nodeContent(page.node)
-            summaryNodeGroup(page.classes, "Classes", headerAsRow = false) { classLikeRow(it) }
-            summaryNodeGroup(page.exceptions, "Exceptions", headerAsRow = false) { classLikeRow(it) }
-            summaryNodeGroup(page.typeAliases, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
-            summaryNodeGroup(page.annotations, "Annotations", headerAsRow = false) { classLikeRow(it) }
-            summaryNodeGroup(page.enums, "Enums", headerAsRow = false) { classLikeRow(it) }
+            this@composePage.summaryNodeGroup(page.interfaces, "Interfaces", headerAsRow = false) { classLikeRow(it) }
+            this@composePage.summaryNodeGroup(page.classes, "Classes", headerAsRow = false) { classLikeRow(it) }
+            this@composePage.summaryNodeGroup(page.exceptions, "Exceptions", headerAsRow = false) { classLikeRow(it) }
+            this@composePage.summaryNodeGroup(page.typeAliases, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
+            this@composePage.summaryNodeGroup(page.annotations, "Annotations", headerAsRow = false) { classLikeRow(it) }
+            this@composePage.summaryNodeGroup(page.enums, "Enums", headerAsRow = false) { classLikeRow(it) }
 
-            summaryNodeGroup(
+            this@composePage.summaryNodeGroup(
                 page.constants,
                 "Top-level constants summary",
                 headerAsRow = false
@@ -406,7 +407,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 propertyLikeSummaryRow(it)
             }
 
-            summaryNodeGroup(
+            this@composePage.summaryNodeGroup(
                 page.functions,
                 "Top-level functions summary",
                 headerAsRow = false
@@ -414,7 +415,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 functionLikeSummaryRow(it)
             }
 
-            summaryNodeGroup(
+            this@composePage.summaryNodeGroup(
                 page.properties,
                 "Top-level properties summary",
                 headerAsRow = false
@@ -422,7 +423,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 propertyLikeSummaryRow(it)
             }
 
-            summaryNodeGroup(
+            this@composePage.summaryNodeGroup(
                 page.extensionFunctions.entries,
                 "Extension functions summary",
                 headerAsRow = false
@@ -432,7 +433,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 }
             }
 
-            summaryNodeGroup(
+            this@composePage.summaryNodeGroup(
                 page.extensionProperties.entries,
                 "Extension properties summary",
                 headerAsRow = false
@@ -456,7 +457,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             return
         }
 
-        val targetLink = node.links.singleOrNull()
+        val targetLink = node.links.firstOrNull()
 
         if (targetLink?.kind == NodeKind.TypeParameter) {
             +node.name
@@ -527,7 +528,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
     }
 
     protected open fun FlowContent.classLikeSummaries(page: Page.ClassPage) = with(page) {
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             nestedClasses,
             "Nested classes",
             headerAsRow = true
@@ -535,14 +536,14 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             nestedClassSummaryRow(it)
         }
 
-        summaryNodeGroup(enumValues, "Enum values") {
+        this@classLikeSummaries.summaryNodeGroup(enumValues, "Enum values") {
             propertyLikeSummaryRow(it)
         }
 
-        summaryNodeGroup(constants, "Constants") { propertyLikeSummaryRow(it) }
+        this@classLikeSummaries.summaryNodeGroup(constants, "Constants") { propertyLikeSummaryRow(it) }
 
         constructors.forEach { (visibility, group) ->
-            summaryNodeGroup(
+            this@classLikeSummaries.summaryNodeGroup(
                     group,
                     "${visibility.capitalize()} constructors",
                     headerAsRow = true
@@ -552,7 +553,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         }
 
         functions.forEach { (visibility, group) ->
-            summaryNodeGroup(
+            this@classLikeSummaries.summaryNodeGroup(
                     group,
                     "${visibility.capitalize()} functions",
                     headerAsRow = true
@@ -561,14 +562,14 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             }
         }
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             companionFunctions,
             "Companion functions",
             headerAsRow = true
         ) {
             functionLikeSummaryRow(it)
         }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             inheritedFunctionsByReceiver.entries,
             "Inherited functions",
             headerAsRow = true
@@ -577,7 +578,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 functionLikeSummaryRow(it)
             }
         }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             extensionFunctions.entries,
             "Extension functions",
             headerAsRow = true
@@ -586,7 +587,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 functionLikeSummaryRow(it)
             }
         }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             inheritedExtensionFunctions.entries,
             "Inherited extension functions",
             headerAsRow = true
@@ -597,8 +598,8 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         }
 
 
-        summaryNodeGroup(properties, "Properties", headerAsRow = true) { propertyLikeSummaryRow(it) }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(properties, "Properties", headerAsRow = true) { propertyLikeSummaryRow(it) }
+        this@classLikeSummaries.summaryNodeGroup(
             companionProperties,
             "Companion properties",
             headerAsRow = true
@@ -606,7 +607,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
             propertyLikeSummaryRow(it)
         }
 
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             inheritedPropertiesByReceiver.entries,
             "Inherited properties",
             headerAsRow = true
@@ -615,7 +616,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 propertyLikeSummaryRow(it)
             }
         }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             extensionProperties.entries,
             "Extension properties",
             headerAsRow = true
@@ -624,7 +625,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 propertyLikeSummaryRow(it)
             }
         }
-        summaryNodeGroup(
+        this@classLikeSummaries.summaryNodeGroup(
             inheritedExtensionProperties.entries,
             "Inherited extension properties",
             headerAsRow = true
@@ -884,7 +885,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
         emphasis: Boolean = true): ContentNode? {
         val deprecated = node.deprecation
         deprecated?.let {
-            return ContentParagraph().apply {
+            return ContentParagraph("caution").apply {
                 if (prefix) {
                     append(ContentStrong().apply { text(
                         if (deprecated.content.children.size == 0) "Deprecated."
@@ -1088,6 +1089,8 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 assert(node.kind == NodeKind.Package)
             }
 
+            val interfaces = node.members(NodeKind.Interface) +
+                    node.members(NodeKind.Class).flatMap { it.members(NodeKind.Interface) }
             val classes = node.members(NodeKind.Class)
             val exceptions = node.members(NodeKind.Exception)
             val typeAliases = node.members(NodeKind.TypeAlias)
@@ -1106,8 +1109,8 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                 filter { it.getClassExtensionReceiver() != null }
                     .groupBy {
                         val receiverType = it.getClassExtensionReceiver()!!
-                        receiverType.links(NodeKind.ExternalLink).firstOrNull()
-                                ?: receiverType.links.first { it.kind in NodeKind.classLike}
+                        receiverType.links.filter { it.kind != NodeKind.ExternalLink}.firstOrNull() ?:
+                            receiverType.links(NodeKind.ExternalLink).first()
                     }
 
             private fun List<DocumentationNode>.externalExtensions(kind: NodeKind) =
