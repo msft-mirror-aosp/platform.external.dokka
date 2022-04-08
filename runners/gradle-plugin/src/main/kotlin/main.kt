@@ -79,7 +79,6 @@ open class DokkaTask : DefaultTask() {
     var moduleName: String = ""
     @Input
     var outputFormat: String = "html"
-    @get:Internal // handled by getOutputDirectoryAsFile
     var outputDirectory: String = ""
 
 
@@ -119,7 +118,6 @@ open class DokkaTask : DefaultTask() {
     @Input var outlineRoot: String = ""
     @Input var dacRoot: String = ""
 
-    @get:Input
     @Deprecated(`deprecationMessage reportNotDocumented`, replaceWith = ReplaceWith("reportUndocumented"))
     var reportNotDocumented
         get() = reportUndocumented

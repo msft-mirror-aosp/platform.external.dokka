@@ -32,7 +32,6 @@ class JavaLayoutHtmlFormatGenerator @Inject constructor(
         return when (node.kind) {
             NodeKind.Module -> URI("/").resolve(node.name + "/")
             NodeKind.Package -> tryGetContainerUri(node.getOwnerOrReport())?.resolve(node.name.replace('.', '/') + '/')
-            NodeKind.GroupNode -> tryGetContainerUri(node.getOwnerOrReport())
             in NodeKind.classLike -> tryGetContainerUri(node.getOwnerOrReport())?.resolve("${node.classNodeNameWithOuterClass()}.html")
             else -> null
         }
@@ -82,7 +81,7 @@ class JavaLayoutHtmlFormatGenerator @Inject constructor(
 
     fun buildPackage(node: DocumentationNode, parentDir: File) {
         assert(node.kind == NodeKind.Package)
-        var members = node.members
+        val members = node.members
         val directoryForPackage = parentDir.resolve(node.name.replace('.', File.separatorChar))
         directoryForPackage.mkdirsOrFail()
 
@@ -90,9 +89,6 @@ class JavaLayoutHtmlFormatGenerator @Inject constructor(
             createOutputBuilderForNode(node, it).generatePage(Page.PackagePage(node))
         }
 
-        members.filter { it.kind == NodeKind.GroupNode }.forEach {
-            members += it.members
-        }
         members.filter { it.kind in NodeKind.classLike }.forEach {
             buildClass(it, directoryForPackage)
         }

@@ -4,14 +4,14 @@ class Bar {
     fun badBarMethod(): DeprecatedBar { return DeprecatedBar() }
 
     /**
-     * This method has been deprecated in favor of replacementBarMethod().
+     * @deprecated Use {@link #replacementBarMethod()} instead.
      */
-    @Deprecated("Obsolete method", ReplaceWith("replacementBarMethod()"))
+    @Deprecated
     fun goodBarMethod(): DeprecatedBar { return DeprecatedBar() }
 }
 
 /**
- * This class has been deprecated in favor of Bar.
+ * @deprecated Use {@link #Bar} instead.
  */
-@Deprecated("Obsolete class", ReplaceWith("Bar"))
+@Deprecated
 class DeprecatedBar

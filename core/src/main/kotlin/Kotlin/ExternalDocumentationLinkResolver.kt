@@ -42,7 +42,7 @@ class ExternalDocumentationLinkResolver @Inject constructor(
         override fun toString(): String = rootUrl.toString()
     }
 
-    val cacheDir: Path? = options.cacheRoot?.resolve("packageListCache")?.apply {  toFile().mkdirs() }
+    val cacheDir: Path? = options.cacheRoot?.resolve("packageListCache")?.apply { createDirectories() }
 
     val cachedProtocols = setOf("http", "https", "ftp")
 
@@ -86,13 +86,13 @@ class ExternalDocumentationLinkResolver @Inject constructor(
 
             val digest = MessageDigest.getInstance("SHA-256")
             val hash = digest.digest(packageListLink.toByteArray(Charsets.UTF_8)).toHexString()
-            val cacheEntry = cacheDir.resolve(hash).toFile()
+            val cacheEntry = cacheDir.resolve(hash)
 
             if (cacheEntry.exists()) {
                 try {
                     val connection = packageListUrl.doOpenConnectionToReadContent()
                     val originModifiedDate = connection.date
-                    val cacheDate = cacheEntry.lastModified()
+                    val cacheDate = cacheEntry.lastModified().toMillis()
                     if (originModifiedDate > cacheDate || originModifiedDate == 0L) {
                         if (originModifiedDate == 0L)
                             logger.warn("No date header for $packageListUrl, downloading anyway")
