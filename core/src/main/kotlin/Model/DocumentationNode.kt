@@ -64,7 +64,6 @@ enum class NodeKind {
     AttributeRef,
 
     ApiLevel,
-    SdkExtSince,
 
     DeprecatedLevel,
 
@@ -121,8 +120,6 @@ open class DocumentationNode(val name: String,
         get() = references(RefKind.ExternalType).map { it.to }.firstOrNull()
     val apiLevel: DocumentationNode
         get() = detailOrNull(NodeKind.ApiLevel) ?: DocumentationNode("", Content.Empty, NodeKind.ApiLevel)
-    val sdkExtSince: DocumentationNode
-        get() = detailOrNull(NodeKind.SdkExtSince) ?: DocumentationNode("", Content.Empty, NodeKind.SdkExtSince)
     val deprecatedLevel: DocumentationNode
         get() = detailOrNull(NodeKind.DeprecatedLevel) ?: DocumentationNode("", Content.Empty, NodeKind.DeprecatedLevel)
     val artifactId: DocumentationNode
