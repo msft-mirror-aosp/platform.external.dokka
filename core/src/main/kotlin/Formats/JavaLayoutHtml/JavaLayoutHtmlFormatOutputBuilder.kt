@@ -1068,7 +1068,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
 
             val inheritedFieldsByReceiver =
                 allInheritedMembers.filter {
-                    it == NodeKind.Field && it.constantValue() != null
+                    it.kind == NodeKind.Field && it.constantValue() != null
                 }.groupBy { it.owner!! }
 
             val originalExtensions = if (!isCompanion) node.extensions else node.owner!!.extensions
