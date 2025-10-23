@@ -53,4 +53,5 @@ java_binary_host {
     use_tools_jar: true,
     java_resource_dirs: ["core/src/main/resources"],
     kotlin_lang_version: "1.9",
+    wrapper: "scripts/jar-wrapper.sh",
 }
