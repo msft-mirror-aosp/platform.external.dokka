@@ -35,16 +35,24 @@ license {
     ],
 }
 
+filegroup {
+    name: "dokka-package-list",
+    srcs: [
+        "package-list",
+    ],
+    visibility: ["//visibility:public"],
+}
+
 java_binary_host {
     name: "dokka",
     srcs: [
         "core/src/main/**/*.kt",
         "runners/cli/**/*.kt",
         "integration/**/*.kt",
-        "buildSrc/**/*.groovy"
+        "buildSrc/**/*.groovy",
     ],
     static_libs: [
-      "dokka-tools-common-m2-deps",
+        "dokka-tools-common-m2-deps",
     ],
     // Pin to Java 8 since dokka doesn't compile with the Java 9 module system
     // (it references packages under com.sun.tools.doclets which are not
@@ -53,5 +61,11 @@ java_binary_host {
     use_tools_jar: true,
     java_resource_dirs: ["core/src/main/resources"],
     kotlin_lang_version: "1.9",
+    runtime_host_tool_deps: [
+        "basename",
+        "dirname",
+        "expr",
+        "ls",
+    ],
     wrapper: "scripts/jar-wrapper.sh",
 }
