@@ -3,9 +3,12 @@ description:
   "Dokka is a documentation engine for Kotlin and Java."
   "For version information, please see the README.android file"
 third_party {
-  url {
-    type: GIT
+  # See README.android for more details about the local changes.
+  identifier {
+    type: "Git"
     value: "https://github.com/Kotlin/dokka.git"
+    version: "7a066afb0ba47b5b57e98a5d821a0cbe97322670"
+    closest_version: "0.9.17-g002"
   }
   license_type: NOTICE
   last_upgrade_date {
