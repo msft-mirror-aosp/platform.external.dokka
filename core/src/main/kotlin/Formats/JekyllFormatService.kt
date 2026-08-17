@@ -12,15 +12,15 @@ open class JekyllOutputBuilder(to: StringBuilder,
                                impliedPlatforms: List<String>)
     : MarkdownOutputBuilder(to, location, generator, languageService, extension, impliedPlatforms) {
     override fun appendNodes(nodes: Iterable<DocumentationNode>) {
-        to.appendln("---")
+        to.appendLine("---")
         appendFrontMatter(nodes, to)
-        to.appendln("---")
-        to.appendln("")
+        to.appendLine("---")
+        to.appendLine("")
         super.appendNodes(nodes)
     }
 
     protected open fun appendFrontMatter(nodes: Iterable<DocumentationNode>, to: StringBuilder) {
-        to.appendln("title: ${getPageTitle(nodes)}")
+        to.appendLine("title: ${getPageTitle(nodes)}")
     }
 }
 

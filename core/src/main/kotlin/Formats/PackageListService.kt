@@ -49,7 +49,7 @@ class DefaultPackageListService @Inject constructor(
         module.members.forEach { visit(it) }
 
         return buildString {
-            appendln("\$dokka.linkExtension:${formatService.linkExtension}")
+            appendLine("\$dokka.linkExtension:${formatService.linkExtension}")
 
             nonStandardLocations.map { (signature, location) -> "\$dokka.location:$signature\u001f$location" }
                     .sorted().joinTo(this, separator = "\n", postfix = "\n")

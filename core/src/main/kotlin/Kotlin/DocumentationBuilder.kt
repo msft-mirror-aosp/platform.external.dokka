@@ -191,7 +191,7 @@ class DocumentationBuilder
                 modality = Modality.FINAL
             }
         }
-        val modifier = modality.name.toLowerCase()
+        val modifier = modality.name.lowercase()
         appendTextNode(modifier, NodeKind.Modifier)
     }
 
@@ -1159,7 +1159,7 @@ fun DocumentationModule.prepareForGeneration(options: DocumentationOptions) {
 fun DocumentationNode.generateAllTypesNode() {
     val allTypes = members(NodeKind.Package)
             .flatMap { it.members.filter { it.kind in NodeKind.classLike || it.kind == NodeKind.ExternalClass } }
-            .sortedBy { if (it.kind == NodeKind.ExternalClass) it.name.substringAfterLast('.').toLowerCase() else it.name.toLowerCase() }
+            .sortedBy { if (it.kind == NodeKind.ExternalClass) it.name.substringAfterLast('.').lowercase() else it.name.lowercase() }
 
     val allTypesNode = DocumentationNode("alltypes", Content.Empty, NodeKind.AllTypes)
     for (typeNode in allTypes) {

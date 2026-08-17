@@ -54,14 +54,14 @@ class BookOutlineService(
 
     /** Appends formatted outline to [StringBuilder](to) using specified [location] */
     fun appendOutline(to: Appendable, nodes: Iterable<DocumentationNode>) {
-        if (outlineLevel == 0) to.appendln("reference:")
+        if (outlineLevel == 0) to.appendLine("reference:")
         for (node in nodes) {
             appendOutlineHeader(node, to)
             val subPackages = node.members.filter {
                 it.kind == NodeKind.Package
             }
             if (subPackages.any()) {
-                val sortedMembers = subPackages.sortedBy { it.name.toLowerCase() }
+                val sortedMembers = subPackages.sortedBy { it.name.lowercase() }
                 appendOutlineLevel(to) {
                     appendOutline(to, sortedMembers)
                 }
@@ -72,13 +72,13 @@ class BookOutlineService(
 
     fun appendOutlineHeader(node: DocumentationNode, to: Appendable) {
         if (node is DocumentationModule) {
-            to.appendln("- title: Package Index")
-            to.appendln("  path: $dacRoot${uriProvider.outlineRootUri(node).resolve("packages.html")}")
-            to.appendln("  status_text: no-toggle")
+            to.appendLine("- title: Package Index")
+            to.appendLine("  path: $dacRoot${uriProvider.outlineRootUri(node).resolve("packages.html")}")
+            to.appendLine("  status_text: no-toggle")
         } else {
-            to.appendln("- title: ${languageService.renderName(node)}")
-            to.appendln("  path: $dacRoot${uriProvider.mainUriOrWarn(node)}")
-            to.appendln("  status_text: no-toggle")
+            to.appendLine("- title: ${languageService.renderName(node)}")
+            to.appendLine("  path: $dacRoot${uriProvider.mainUriOrWarn(node)}")
+            to.appendLine("  status_text: no-toggle")
         }
     }
 
@@ -110,7 +110,7 @@ class TocOutlineService(
 
     /** Appends formatted outline to [StringBuilder](to) using specified [location] */
     fun appendOutline(to: Appendable, nodes: Iterable<DocumentationNode>) {
-        if (outlineLevel == 0) to.appendln("toc:")
+        if (outlineLevel == 0) to.appendLine("toc:")
         for (node in nodes) {
             appendOutlineHeader(node, to)
             val subPackages = node.members.filter {
@@ -129,39 +129,39 @@ class TocOutlineService(
         if (node is DocumentationModule) {
             if (generateClassIndex) {
                 node.members.filter { it.kind == NodeKind.AllTypes }.firstOrNull()?.let {
-                    to.appendln("- title: Class Index")
-                    to.appendln("  path: $dacRoot${uriProvider.outlineRootUri(it).resolve("classes.html")}")
-                    to.appendln()
+                    to.appendLine("- title: Class Index")
+                    to.appendLine("  path: $dacRoot${uriProvider.outlineRootUri(it).resolve("classes.html")}")
+                    to.appendLine()
                 }
             }
             if (generatePackageIndex) {
-                to.appendln("- title: Package Index")
-                to.appendln("  path: $dacRoot${uriProvider.outlineRootUri(node).resolve("packages.html")}")
-                to.appendln()
+                to.appendLine("- title: Package Index")
+                to.appendLine("  path: $dacRoot${uriProvider.outlineRootUri(node).resolve("packages.html")}")
+                to.appendLine()
             }
         } else if (node.kind != NodeKind.AllTypes && !(node is DocumentationModule)) {
-            to.appendln("- title: ${languageService.renderName(node)}")
-            to.appendln("  path: $dacRoot${uriProvider.mainUriOrWarn(node)}")
-            to.appendln()
+            to.appendLine("- title: ${languageService.renderName(node)}")
+            to.appendLine("  path: $dacRoot${uriProvider.mainUriOrWarn(node)}")
+            to.appendLine()
             var addedSectionHeader = false
             for (kind in NodeKind.classLike) {
                 val members = node.getMembersOfKinds(kind)
                 if (members.isNotEmpty()) {
                     if (!addedSectionHeader) {
-                        to.appendln("  section:")
+                        to.appendLine("  section:")
                         addedSectionHeader = true
                     }
-                    to.appendln("  - title: ${kind.pluralizedName()}")
-                    to.appendln()
-                    to.appendln("    section:")
-                    members.sortedBy { it.nameWithOuterClass().toLowerCase() }.forEach { member ->
-                        to.appendln("    - title: ${languageService.renderNameWithOuterClass(member)}")
-                        to.appendln("      path: $dacRoot${uriProvider.mainUriOrWarn(member)}".trimEnd('#'))
-                        to.appendln()
+                    to.appendLine("  - title: ${kind.pluralizedName()}")
+                    to.appendLine()
+                    to.appendLine("    section:")
+                    members.sortedBy { it.nameWithOuterClass().lowercase() }.forEach { member ->
+                        to.appendLine("    - title: ${languageService.renderNameWithOuterClass(member)}")
+                        to.appendLine("      path: $dacRoot${uriProvider.mainUriOrWarn(member)}".trimEnd('#'))
+                        to.appendLine()
                     }
                 }
             }
-            to.appendln().appendln()
+            to.appendLine().appendLine()
         }
     }
 

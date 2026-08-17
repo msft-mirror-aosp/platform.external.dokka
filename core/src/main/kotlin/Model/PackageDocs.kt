@@ -101,7 +101,7 @@ class PackageDocs
 
             if (trimmedText.startsWith("/**")) {
                 parseJavadoc(text, packageName, file)
-            } else if (trimmedText.toLowerCase().startsWith("<html>")) {
+            } else if (trimmedText.lowercase().startsWith("<html>")) {
                 parseHtmlAsJavadoc(trimmedText, packageName, file)
             }
         }

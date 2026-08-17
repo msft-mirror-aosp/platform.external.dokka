@@ -69,27 +69,27 @@ open class KotlinWebsiteHtmlOutputBuilder(
     override fun appendLink(href: String, body: () -> Unit) = wrap("<a href=\"$href\">", "</a>", body)
 
     override fun appendTable(vararg columns: String, body: () -> Unit) {
-        to.appendln("<table class=\"api-docs-table\">")
+        to.appendLine("<table class=\"api-docs-table\">")
         body()
-        to.appendln("</table>")
+        to.appendLine("</table>")
     }
 
     override fun appendTableBody(body: () -> Unit) {
-        to.appendln("<tbody>")
+        to.appendLine("<tbody>")
         body()
-        to.appendln("</tbody>")
+        to.appendLine("</tbody>")
     }
 
     override fun appendTableRow(body: () -> Unit) {
-        to.appendln("<tr>")
+        to.appendLine("<tr>")
         body()
-        to.appendln("</tr>")
+        to.appendLine("</tr>")
     }
 
     override fun appendTableCell(body: () -> Unit) {
-        to.appendln("<td>")
+        to.appendLine("<td>")
         body()
-        to.appendln("\n</td>")
+        to.appendLine("\n</td>")
     }
 
     override fun appendSymbol(text: String) {

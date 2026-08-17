@@ -38,12 +38,12 @@ abstract class StructuredOutputBuilder(val to: StringBuilder,
                             newlineBeforeOpen: Boolean = false,
                             newlineAfterOpen: Boolean = false,
                             newlineAfterClose: Boolean = false) {
-        if (newlineBeforeOpen && !to.endsWith('\n')) to.appendln()
+        if (newlineBeforeOpen && !to.endsWith('\n')) to.appendLine()
         to.append("<$tag>")
-        if (newlineAfterOpen) to.appendln()
+        if (newlineAfterOpen) to.appendLine()
         body()
         to.append("</$tag>")
-        if (newlineAfterClose) to.appendln()
+        if (newlineAfterClose) to.appendLine()
     }
 
     protected abstract fun ensureParagraph()
@@ -576,7 +576,7 @@ abstract class StructuredOutputBuilder(val to: StringBuilder,
 
             appendHeader(3) { appendText(caption) }
 
-            val children = if (sortMembers) members.sortedBy { it.name.toLowerCase() } else members
+            val children = if (sortMembers) members.sortedBy { it.name.lowercase() } else members
             val membersMap = children.groupBy { link(node, it) }
 
 

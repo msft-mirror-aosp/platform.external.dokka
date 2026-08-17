@@ -45,7 +45,7 @@ fun relativePathToNode(node: DocumentationNode) = relativePathToNode(node.path.m
 
 fun identifierToFilename(path: String): String {
     val escaped = path.replace('<', '-').replace('>', '-')
-    val lowercase = escaped.replace("[A-Z]".toRegex()) { matchResult -> "-" + matchResult.value.toLowerCase() }
+    val lowercase = escaped.replace("[A-Z]".toRegex()) { matchResult -> "-" + matchResult.value.lowercase() }
     return if (lowercase == "index") "--index--" else lowercase
 }
 

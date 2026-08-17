@@ -977,7 +977,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                         .takeUnless { it.isEmpty() }
                 }.drop(1)
                     .flatten()
-                    .sortedBy { it.classNodeNameWithOuterClass().toLowerCase() }
+                    .sortedBy { it.classNodeNameWithOuterClass().lowercase() }
                     .toList()
 
 
@@ -989,7 +989,7 @@ open class JavaLayoutHtmlFormatOutputBuilder(
                     }
                     .entries
                     .sortedBy { (letter) ->
-                        val x = letter.toLowerCase()
+                        val x = letter.lowercase()
                         x
                     }
         }

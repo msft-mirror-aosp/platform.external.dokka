@@ -19,7 +19,7 @@ open class KotlinWebsiteOutputBuilder(
 
     override fun appendFrontMatter(nodes: Iterable<DocumentationNode>, to: StringBuilder) {
         super.appendFrontMatter(nodes, to)
-        to.appendln("layout: api")
+        to.appendLine("layout: api")
     }
 
     override fun appendBreadcrumbs(path: Iterable<FormatLink>) {
@@ -77,34 +77,34 @@ open class KotlinWebsiteOutputBuilder(
 
     override fun appendLine() {
         if (insideDiv > 0) {
-            to.appendln("<br/>")
+            to.appendLine("<br/>")
         } else {
             super.appendLine()
         }
     }
 
     override fun appendTable(vararg columns: String, body: () -> Unit) {
-        to.appendln("<table class=\"api-docs-table\">")
+        to.appendLine("<table class=\"api-docs-table\">")
         body()
-        to.appendln("</table>")
+        to.appendLine("</table>")
     }
 
     override fun appendTableBody(body: () -> Unit) {
-        to.appendln("<tbody>")
+        to.appendLine("<tbody>")
         body()
-        to.appendln("</tbody>")
+        to.appendLine("</tbody>")
     }
 
     override fun appendTableRow(body: () -> Unit) {
-        to.appendln("<tr>")
+        to.appendLine("<tr>")
         body()
-        to.appendln("</tr>")
+        to.appendLine("</tr>")
     }
 
     override fun appendTableCell(body: () -> Unit) {
-        to.appendln("<td markdown=\"1\">")
+        to.appendLine("<td markdown=\"1\">")
         body()
-        to.appendln("\n</td>")
+        to.appendLine("\n</td>")
     }
 
     override fun appendBlockCode(language: String, body: () -> Unit) {

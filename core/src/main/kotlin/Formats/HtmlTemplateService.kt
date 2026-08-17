@@ -13,22 +13,22 @@ interface HtmlTemplateService {
                     if (!to.endsWith('\n')) {
                         to.append('\n')
                     }
-                    to.appendln("</BODY>")
-                    to.appendln("</HTML>")
+                    to.appendLine("</BODY>")
+                    to.appendLine("</HTML>")
                 }
                 override fun appendHeader(to: StringBuilder, title: String?, basePath: File) {
-                    to.appendln("<HTML>")
-                    to.appendln("<HEAD>")
-                    to.appendln("<meta charset=\"UTF-8\">")
+                    to.appendLine("<HTML>")
+                    to.appendLine("<HEAD>")
+                    to.appendLine("<meta charset=\"UTF-8\">")
                     if (title != null) {
-                        to.appendln("<title>$title</title>")
+                        to.appendLine("<title>$title</title>")
                     }
                     if (css != null) {
                         val cssPath = basePath.resolve(css).toUnixString()
-                        to.appendln("<link rel=\"stylesheet\" href=\"$cssPath\">")
+                        to.appendLine("<link rel=\"stylesheet\" href=\"$cssPath\">")
                     }
-                    to.appendln("</HEAD>")
-                    to.appendln("<BODY>")
+                    to.appendLine("</HEAD>")
+                    to.appendLine("<BODY>")
                 }
             }
         }

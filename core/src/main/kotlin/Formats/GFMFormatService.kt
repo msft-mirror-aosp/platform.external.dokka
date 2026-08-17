@@ -13,8 +13,8 @@ open class GFMOutputBuilder(
         impliedPlatforms: List<String>
 ) : MarkdownOutputBuilder(to, location, generator, languageService, extension, impliedPlatforms) {
     override fun appendTable(vararg columns: String, body: () -> Unit) {
-        to.appendln(columns.joinToString(" | ", "| ", " |"))
-        to.appendln("|" + "---|".repeat(columns.size))
+        to.appendLine(columns.joinToString(" | ", "| ", " |"))
+        to.appendLine("|" + "---|".repeat(columns.size))
         body()
     }
 
