@@ -47,11 +47,11 @@ open class HtmlOutputBuilder(to: StringBuilder,
     override fun appendSoftParagraph(body: () -> Unit) = appendParagraph(body)
 
     override fun appendLine() {
-        to.appendln("<br/>")
+        to.appendLine("<br/>")
     }
 
     override fun appendAnchor(anchor: String) {
-        to.appendln("<a name=\"${anchor.htmlEscape()}\"></a>")
+        to.appendLine("<a name=\"${anchor.htmlEscape()}\"></a>")
     }
 
     override fun appendTable(vararg columns: String, body: () -> Unit) =
@@ -121,13 +121,13 @@ open class HtmlFormatService @Inject constructor(generator: NodeLocationAwareGen
         link.append(languageService.render(node, LanguageService.RenderMode.FULL))
         val tempBuilder = StringBuilder()
         createOutputBuilder(tempBuilder, location).appendContent(link)
-        to.appendln("<a href=\"${location.path}\">$tempBuilder</a><br/>")
+        to.appendLine("<a href=\"${location.path}\">$tempBuilder</a><br/>")
     }
 
     override fun appendOutlineLevel(to: StringBuilder, body: () -> Unit) {
-        to.appendln("<ul>")
+        to.appendLine("<ul>")
         body()
-        to.appendln("</ul>")
+        to.appendLine("</ul>")
     }
 }
 

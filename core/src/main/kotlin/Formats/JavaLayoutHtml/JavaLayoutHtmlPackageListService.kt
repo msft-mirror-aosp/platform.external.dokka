@@ -20,7 +20,7 @@ class JavaLayoutHtmlPackageListService: PackageListService {
         append(DOKKA_PARAM_PREFIX)
         append(name)
         append(":")
-        appendln(value)
+        appendLine(value)
     }
 
     override fun formatPackageList(module: DocumentationModule): String {
@@ -30,7 +30,7 @@ class JavaLayoutHtmlPackageListService: PackageListService {
             appendParam("format", "java-layout-html")
             appendParam("mode", "kotlin")
             for (p in packages) {
-                appendln(p)
+                appendLine(p)
             }
         }
     }

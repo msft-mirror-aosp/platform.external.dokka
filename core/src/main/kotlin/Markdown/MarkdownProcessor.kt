@@ -33,7 +33,7 @@ fun MarkdownNode.toTestString(): String {
     visit { node, visitChildren ->
         sb.append(" ".repeat(level * 2))
         node.presentTo(sb)
-        sb.appendln()
+        sb.appendLine()
         level++
         visitChildren()
         level--

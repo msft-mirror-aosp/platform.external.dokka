@@ -83,7 +83,7 @@ class SeeClassTagAdapter(holder: Doc, val clazz: ClassDocumentationNodeAdapter, 
     override fun referencedPackage(): PackageDoc? = null
     override fun referencedClass(): ClassDoc = clazz
     override fun referencedClassName(): String = clazz.name()
-    override fun label(): String = "${clazz.classNode.kind.name.toLowerCase()} ${clazz.name()}"
+    override fun label(): String = "${clazz.classNode.kind.name.lowercase()} ${clazz.name()}"
 
     override fun inlineTags(): Array<out Tag> = emptyArray() // TODO
     override fun firstSentenceTags(): Array<out Tag> = inlineTags() // TODO

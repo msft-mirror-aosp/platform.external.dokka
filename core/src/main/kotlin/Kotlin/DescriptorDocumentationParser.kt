@@ -137,18 +137,18 @@ class DescriptorDocumentationParser @Inject constructor(
     private fun DocumentationNode.addExtraTags(tags: Array<KDocTag>, descriptor: DeclarationDescriptor) {
         tags.forEach {
             val name = it.name
-            if (name?.toLowerCase() == "attr") {
+            if (name?.lowercase() == "attr") {
                 it.getAttr(descriptor)?.let { append(it, RefKind.Detail) }
-            } else if (name?.toLowerCase() == "since" || name?.toLowerCase() == "apisince") {
+            } else if (name?.lowercase() == "since" || name?.lowercase() == "apisince") {
                 val apiLevel = DocumentationNode(it.getContent(), Content.Empty, NodeKind.ApiLevel)
                 append(apiLevel, RefKind.Detail)
-            } else if (name?.toLowerCase() == "sdkextsince") {
+            } else if (name?.lowercase() == "sdkextsince") {
                 val sdkExtSince = DocumentationNode(it.getContent(), Content.Empty, NodeKind.SdkExtSince)
                 append(sdkExtSince, RefKind.Detail)
-            } else if (name?.toLowerCase() == "deprecatedsince") {
+            } else if (name?.lowercase() == "deprecatedsince") {
                 val deprecatedLevel = DocumentationNode(it.getContent(), Content.Empty, NodeKind.DeprecatedLevel)
                 append(deprecatedLevel, RefKind.Detail)
-            } else if (name?.toLowerCase() == "artifactid") {
+            } else if (name?.lowercase() == "artifactid") {
                 val artifactId = DocumentationNode(it.getContent(), Content.Empty, NodeKind.ArtifactId)
                 append(artifactId, RefKind.Detail)
             }

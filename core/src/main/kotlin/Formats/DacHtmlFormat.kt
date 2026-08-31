@@ -514,12 +514,12 @@ class DevsiteLayoutHtmlFormatOutputBuilder(
             bodyContent = {
                 h1 { +page.node.name }
                 nodeContent(page.node)
-                this@composePage.summaryNodeGroup(page.interfaces.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Interfaces", headerAsRow = false) { classLikeRow(it) }
-                this@composePage.summaryNodeGroup(page.classes.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Classes", headerAsRow = false) { classLikeRow(it) }
-                this@composePage.summaryNodeGroup(page.exceptions.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Exceptions", headerAsRow = false) { classLikeRow(it) }
-                this@composePage.summaryNodeGroup(page.typeAliases.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
-                this@composePage.summaryNodeGroup(page.annotations.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Annotations", headerAsRow = false) { classLikeRow(it) }
-                this@composePage.summaryNodeGroup(page.enums.sortedBy { it.nameWithOuterClass().toLowerCase() }, "Enums", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.interfaces.sortedBy { it.nameWithOuterClass().lowercase() }, "Interfaces", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.classes.sortedBy { it.nameWithOuterClass().lowercase() }, "Classes", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.exceptions.sortedBy { it.nameWithOuterClass().lowercase() }, "Exceptions", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.typeAliases.sortedBy { it.nameWithOuterClass().lowercase() }, "Type-aliases", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.annotations.sortedBy { it.nameWithOuterClass().lowercase() }, "Annotations", headerAsRow = false) { classLikeRow(it) }
+                this@composePage.summaryNodeGroup(page.enums.sortedBy { it.nameWithOuterClass().lowercase() }, "Enums", headerAsRow = false) { classLikeRow(it) }
 
                 this@composePage.summaryNodeGroup(
                         page.constants.sortedBy { it.name },

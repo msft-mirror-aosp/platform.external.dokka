@@ -37,7 +37,7 @@ open class MarkdownOutputBuilder(to: StringBuilder,
         while (to.endsWith(' ')) {
             to.setLength(to.length - 1)
         }
-        to.appendln()
+        to.appendLine()
     }
 
     private fun ensureNewline() {
@@ -182,10 +182,10 @@ open class MarkdownOutputBuilder(to: StringBuilder,
     override fun appendBlockCode(language: String, body: () -> Unit) {
         inCodeBlock = true
         ensureParagraph()
-        to.appendln(if (language.isEmpty()) "```" else "``` $language")
+        to.appendLine(if (language.isEmpty()) "```" else "``` $language")
         body()
         ensureNewline()
-        to.appendln("```")
+        to.appendLine("```")
         appendLine()
         inCodeBlock = false
     }

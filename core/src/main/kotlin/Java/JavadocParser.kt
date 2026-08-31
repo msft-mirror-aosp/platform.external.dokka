@@ -118,7 +118,7 @@ class JavadocParser(
         var attrDesc: Content? = null
         var attr: DocumentationNode? = null
         docComment.tags.forEach { tag ->
-            when (tag.name.toLowerCase()) {
+            when (tag.name.lowercase()) {
                 "see" -> result.convertSeeTag(tag)
                 "deprecated" -> {
                     deprecatedContent = Content().apply {
@@ -699,9 +699,9 @@ class JavadocParser(
     private fun StringBuilder.appendWithoutInitialIndent(it: String, spaces: InitialSpaceIndent) {
         if (spaces.value == -1) {
             spaces.value = (it.length - it.trimStart().length).coerceAtLeast(0)
-            appendln(it)
+            appendLine(it)
         } else {
-            appendln(if (it.isBlank()) it else it.substring(spaces.value, it.length))
+            appendLine(if (it.isBlank()) it else it.substring(spaces.value, it.length))
         }
     }
 

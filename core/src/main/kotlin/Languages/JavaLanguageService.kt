@@ -58,7 +58,7 @@ class JavaLanguageService : LanguageService {
 
         "kotlin.IntArray", "kotlin.LongArray", "kotlin.ShortArray", "kotlin.ByteArray",
         "kotlin.CharArray", "kotlin.DoubleArray", "kotlin.FloatArray", "kotlin.BooleanArray" ->
-            DocumentationNode(node.name.removeSuffix("Array").toLowerCase(), node.content, NodeKind.Type)
+            DocumentationNode(node.name.removeSuffix("Array").lowercase(), node.content, NodeKind.Type)
 
         else -> null
     }
